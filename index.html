@@ -1,525 +1,724 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Face Capture & Email Form</title>
-    <!-- Font Awesome Icons (optional) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .container {
-            max-width: 900px;
-            width: 100%;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .camera-section {
-            position: relative;
-            width: 100%;
-            max-width: 640px;
-            margin: 0 auto;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        video, canvas {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        #overlayCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        .capture-btn {
-            display: block;
-            width: 200px;
-            margin: 20px auto;
-            padding: 12px 20px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 10px rgba(76,175,80,0.3);
-        }
-        .capture-btn:hover {
-            background: #45a049;
-            transform: scale(1.05);
-        }
-        .capture-btn:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .form-section {
-            margin-top: 30px;
-            display: none;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 10px 20px;
-            align-items: center;
-        }
-        .form-grid label {
-            font-weight: 600;
-            color: #555;
-            text-align: right;
-        }
-        .form-grid input, .form-grid select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            width: 100%;
-        }
-        .auto-detect-box {
-            background: #f0f8ff;
-            border-left: 5px solid #2196F3;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-        .auto-detect-box h3 {
-            margin-top: 0;
-            color: #0b3d5f;
-        }
-        .send-btn {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 14px 25px;
-            font-size: 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            display: block;
-            width: 100%;
-            margin-top: 25px;
-            transition: 0.3s;
-        }
-        .send-btn:hover {
-            background: #0b7ad1;
-        }
-        .status {
-            text-align: center;
-            margin-top: 15px;
-            color: #666;
-        }
-        .email-setup {
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-    </style>
-    <!-- Face-api.js -->
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <!-- EmailJS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>LensAI · Smart Order Form</title>
+  
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="https://smtpjs.com/v3/smtp.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0c111c;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      color: #eef2f6;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app {
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .logo {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #9bb8ff, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge {
+      background: rgba(56, 136, 255, 0.15);
+      border: 1px solid #3888ff80;
+      border-radius: 100px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #b8d4ff;
+    }
+
+    /* Grid: left (camera) + right (auto fields) */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* Camera card */
+    .camera-card {
+      background: #0f1524;
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #1f2a41;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    }
+
+    .camera-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #cbd5e6;
+    }
+
+    .camera-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3/4;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+
+    video, canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    video {
+      transform: scaleX(-1);
+    }
+
+    .auto-values {
+      background: #0f1524;
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #1f2a41;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .auto-row {
+      background: #1a2333;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .auto-row:last-child { margin-bottom: 0; }
+
+    .auto-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #8ba0c0;
+      margin-bottom: 8px;
+    }
+
+    .auto-value {
+      font-size: 30px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fcd34d, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    .auto-hint {
+      font-size: 13px;
+      color: #a0b8d4;
+      margin-top: 6px;
+    }
+
+    /* Form */
+    .form-section {
+      background: #0f1524;
+      border-radius: 24px;
+      padding: 24px;
+      border: 1px solid #1f2a41;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #9bb8ff;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #1f2a41;
+      padding-bottom: 12px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #8ba0c0;
+    }
+
+    .field input, .field select {
+      background: #1a2333;
+      border: 1px solid #2c3a52;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: white;
+      font-size: 14px;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+
+    .field input:focus, .field select:focus {
+      border-color: #3888ff;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(56,136,255,0.2);
+    }
+
+    .field input[readonly] {
+      background: #1e2a3a;
+      color: #c0d0e5;
+      border-color: #3a4a62;
+    }
+
+    .row-2 {
+      grid-column: span 2;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #3888ff, #1e5ad9);
+      border: none;
+      border-radius: 40px;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 1px solid rgba(255,255,255,0.2);
+      margin-top: 12px;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(56,136,255,0.4);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1f2a41;
+      border-left: 6px solid #3888ff;
+      border-radius: 16px;
+      padding: 16px 24px;
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      z-index: 9999;
+      animation: slideIn 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1><i class="fas fa-camera-retro"></i> Smart Face Capture & Email</h1>
-        
-        <!-- EmailJS Setup Instructions (visible only once) -->
-        <div id="setupInstructions" class="email-setup">
-            <strong>📧 Email Setup (required once):</strong>
-            <ol style="margin:5px 0 0 15px; padding-left:0;">
-                <li>Go to <a href="https://www.emailjs.com" target="_blank">EmailJS.com</a> and sign up for a <strong>free account</strong>.</li>
-                <li>In the Dashboard: <strong>Email Services → Add New Service → SMTP</strong>.<br> 
-                    Enter the SMTP settings you provided: <br>
-                    <code>Host: smtp.gmail.com, Port: 587, User: tusharsainivpn1@gmail.com, Password: saol mgbf eywg cwuo</code><br>
-                    (Gmail requires an <strong>App Password</strong> – if you use 2FA, generate one; otherwise enable "less secure apps").</li>
-                <li>After creating the service, copy the <strong>Service ID</strong>.</li>
-                <li>Go to <strong>Email Templates → Create New Template</strong>. Design an email (you can use our default variables below). Copy the <strong>Template ID</strong>.</li>
-                <li>Go to <strong>Account → API Keys</strong> and copy your <strong>Public Key</strong> (User ID).</li>
-                <li>Paste the three IDs into the script at the marked locations (search for <code>YOUR_</code>).</li>
-            </ol>
-            <p style="margin-bottom:0;">Once set up, this box can be removed.</p>
-        </div>
-
-        <!-- Camera Section -->
-        <div class="camera-section">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlayCanvas"></canvas>
-        </div>
-        <button id="captureBtn" class="capture-btn" disabled>
-            <i class="fas fa-circle"></i> Capture Face
-        </button>
-        <div id="captureStatus" class="status">Loading face detection models...</div>
-
-        <!-- Form Section (hidden until capture) -->
-        <div id="formSection" class="form-section">
-            <div class="auto-detect-box" id="autoDetectInfo">
-                <h3><i class="fas fa-magic"></i> Auto‑detected from Face</h3>
-                <p><strong>Frame size:</strong> <span id="frameSizeVal"></span></p>
-                <p><strong>Frame type suggestion:</strong> <span id="frameTypeVal"></span></p>
-                <p><strong>Face width:</strong> <span id="faceWidthVal"></span> mm</p>
-                <p><strong>IPD:</strong> <span id="ipdVal"></span> mm</p>
-                <p><strong>Face shape:</strong> <span id="faceShapeVal"></span></p>
-            </div>
-
-            <h3>Customer Details</h3>
-            <div class="form-grid">
-                <label>Name:</label><input type="text" id="name" placeholder="Full name">
-                <label>Age:</label><input type="number" id="age">
-                <label>DOB:</label><input type="date" id="dob">
-                <label>Gender:</label>
-                <select id="gender">
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
-                </select>
-                <label>Address:</label><input type="text" id="address">
-                <label>Ward no:</label><input type="text" id="ward">
-                <label>Booth no/PS no:</label><input type="text" id="booth">
-                <label>Mobile WhatsApp number:</label><input type="tel" id="mobile">
-                <label>Power:</label><input type="text" id="power">
-                <label>Right (O.D):</label><input type="text" id="od">
-                <label>Left (O.S):</label><input type="text" id="os">
-                <label>Spherical:</label><input type="text" id="spherical">
-                <label>Cylindrical:</label><input type="text" id="cylindrical">
-                <label>Axis:</label><input type="text" id="axis">
-                <label>Prism:</label><input type="text" id="prism">
-                <label>Base:</label><input type="text" id="base">
-            </div>
-
-            <button id="sendBtn" class="send-btn">
-                <i class="fas fa-envelope"></i> Send via Email
-            </button>
-            <div id="emailStatus" class="status"></div>
-        </div>
+  <div class="app">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">👓 LensAI · Smart Fit</div>
+      <div class="badge">⚡ 22‑pt facial analysis</div>
     </div>
 
-    <script>
-        // ---------- GLOBAL VARIABLES ----------
-        let video = document.getElementById('video');
-        let overlayCanvas = document.getElementById('overlayCanvas');
-        let ctx = overlayCanvas.getContext('2d');
-        let captureBtn = document.getElementById('captureBtn');
-        let formSection = document.getElementById('formSection');
-        let statusDiv = document.getElementById('captureStatus');
+    <!-- Camera + Auto‑detect row -->
+    <div class="grid">
+      <!-- Left: camera -->
+      <div class="camera-card">
+        <div class="camera-title">
+          <span>📸 Face scanner</span>
+          <span style="color:#6b7fa6; font-size:12px; margin-left:auto;" id="cameraStatus">initializing...</span>
+        </div>
+        <div class="camera-box">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
+          <div style="background:#1a2333; border-radius:40px; padding:8px 16px; font-size:13px;">
+            <span id="distanceBadge">📏 distance: --</span>
+          </div>
+        </div>
+      </div>
 
-        // Auto-detect fields
-        let frameSizeSpan = document.getElementById('frameSizeVal');
-        let frameTypeSpan = document.getElementById('frameTypeVal');
-        let faceWidthSpan = document.getElementById('faceWidthVal');
-        let ipdSpan = document.getElementById('ipdVal');
-        let faceShapeSpan = document.getElementById('faceShapeVal');
+      <!-- Right: auto‑detected values (live) -->
+      <div class="auto-values">
+        <div class="auto-row">
+          <div class="auto-label">🤖 AI‑detected frame size</div>
+          <div class="auto-value" id="aiFrameSize">--</div>
+          <div class="auto-hint" id="aiFrameHint">position face in the ring</div>
+        </div>
+        <div class="auto-row">
+          <div class="auto-label">✨ recommended style</div>
+          <div class="auto-value" id="aiStyle">--</div>
+          <div class="auto-hint">based on your face shape</div>
+        </div>
+      </div>
+    </div>
 
-        // Captured data
-        let capturedImageData = null; // base64 image
-        let detectedMeasurements = null;
+    <!-- Full order form -->
+    <form id="orderForm">
+      <!-- PERSONAL INFO -->
+      <div class="form-section">
+        <div class="section-title">👤 Personal information</div>
+        <div class="field-grid">
+          <div class="field row-2">
+            <label>Full name *</label>
+            <input type="text" id="name" placeholder="e.g. Jamie Chen" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label>Age</label>
+            <input type="number" id="age" placeholder="32">
+          </div>
+          <div class="field">
+            <label>Date of birth</label>
+            <input type="date" id="dob">
+          </div>
+          <div class="field">
+            <label>Gender</label>
+            <select id="gender">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field row-2">
+            <label>Address</label>
+            <input type="text" id="address" placeholder="Full address">
+          </div>
+          <div class="field">
+            <label>Ward no</label>
+            <input type="text" id="ward" placeholder="e.g. 12">
+          </div>
+          <div class="field">
+            <label>Booth / PS no</label>
+            <input type="text" id="booth" placeholder="e.g. 45">
+          </div>
+          <div class="field row-2">
+            <label>Mobile / WhatsApp *</label>
+            <input type="tel" id="phone" placeholder="10‑digit mobile" maxlength="10" required>
+          </div>
+        </div>
+      </div>
 
-        // ---------- FACE-API SETUP ----------
-        async function loadModels() {
-            statusDiv.innerText = 'Loading face detection models...';
-            try {
-                await faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
-                await faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
-                statusDiv.innerText = 'Models loaded. Starting camera...';
-                startCamera();
-            } catch (err) {
-                statusDiv.innerText = 'Failed to load models. Check internet connection.';
-                console.error(err);
-            }
+      <!-- PRESCRIPTION DETAILS -->
+      <div class="form-section">
+        <div class="section-title">👓 Prescription details</div>
+        
+        <!-- Right eye (OD) -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px; color:#9bb8ff; font-weight:600;">
+            <span>➤ Right eye (O.D.)</span>
+          </div>
+          <div class="field-grid">
+            <div class="field"><label>Spherical</label><input type="text" id="odSph" placeholder="−2.50"></div>
+            <div class="field"><label>Cylindrical</label><input type="text" id="odCyl" placeholder="−0.75"></div>
+            <div class="field"><label>Axis</label><input type="text" id="odAxis" placeholder="180"></div>
+            <div class="field"><label>Prism</label><input type="text" id="odPrism" placeholder="0.5"></div>
+            <div class="field"><label>Base</label><input type="text" id="odBase" placeholder="IN"></div>
+          </div>
+        </div>
+
+        <!-- Left eye (OS) -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px; color:#9bb8ff; font-weight:600;">
+            <span>➤ Left eye (O.S.)</span>
+          </div>
+          <div class="field-grid">
+            <div class="field"><label>Spherical</label><input type="text" id="osSph" placeholder="−2.75"></div>
+            <div class="field"><label>Cylindrical</label><input type="text" id="osCyl" placeholder="−0.50"></div>
+            <div class="field"><label>Axis</label><input type="text" id="osAxis" placeholder="175"></div>
+            <div class="field"><label>Prism</label><input type="text" id="osPrism" placeholder="0.5"></div>
+            <div class="field"><label>Base</label><input type="text" id="osBase" placeholder="OUT"></div>
+          </div>
+        </div>
+
+        <!-- Additional power -->
+        <div class="field-grid" style="margin-top:12px;">
+          <div class="field"><label>Add power (near)</label><input type="text" id="addPower" placeholder="+1.00"></div>
+        </div>
+      </div>
+
+      <!-- Hidden fields for AI data (populated live) -->
+      <input type="hidden" id="hiddenFrameSize" name="frameSize">
+      <input type="hidden" id="hiddenFrameStyle" name="frameStyle">
+
+      <!-- Submit button -->
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span>📨</span> Send order to optician
+      </button>
+      <p style="text-align:center; color:#6b7fa6; font-size:12px; margin-top:12px;">
+        AI analysis + face image will be included in the email
+      </p>
+    </form>
+  </div>
+
+  <!-- Toast container (dynamic) -->
+  <div id="toastContainer"></div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // ----- CONFIGURATION (SMTP – YOUR CREDENTIALS) -----
+      const SMTP_CONFIG = {
+        Host: "smtp.gmail.com",
+        Username: "tusharsainivpn1@gmail.com",
+        Password: "vfxm yctc wqea zknz",  // App password (with spaces)
+        To: "Jagatdal106VS@gmail.com",
+        From: "tusharsainivpn1@gmail.com"
+      };
+
+      // ----- DOM elements (cached) -----
+      const $ = id => document.getElementById(id);
+      const video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d');
+      const cameraStatus = $('cameraStatus');
+      const distanceBadge = $('distanceBadge');
+      const aiFrameSize = $('aiFrameSize'), aiFrameHint = $('aiFrameHint'), aiStyle = $('aiStyle');
+      const hiddenFrameSize = $('hiddenFrameSize'), hiddenFrameStyle = $('hiddenFrameStyle');
+      const form = $('orderForm'), submitBtn = $('submitBtn');
+
+      // ----- State -----
+      let modelsReady = false, cameraActive = false, stream = null, raf = null, lastDetect = 0;
+      let currentFaceData = { frameSize: '--', frameStyle: '--', faceShape: 'Oval', imageBase64: null };
+
+      // ----- Load only 2 models (tinyFaceDetector + landmarks) – fastest setup -----
+      const MODEL_CDN = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/';
+      
+      async function loadModels() {
+        try {
+          await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_CDN);
+          await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_CDN);
+          modelsReady = true;
+          cameraStatus.innerHTML = '✅ ready';
+        } catch (e) {
+          console.warn('Model load failed, using fallback mode');
+          modelsReady = false;
+          cameraStatus.innerHTML = '⚠️ offline';
+          aiFrameHint.textContent = 'AI models not loaded – manual entry';
+        }
+      }
+
+      // ----- Camera init -----
+      async function startCamera() {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+          });
+          video.srcObject = stream;
+          await video.play();
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          cameraActive = true;
+          cameraStatus.innerHTML = modelsReady ? '✅ ready' : '⚠️ offline';
+          detectLoop();
+        } catch (e) {
+          cameraStatus.innerHTML = '❌ camera denied';
+          aiFrameHint.textContent = 'please allow camera access';
+        }
+      }
+
+      // ----- Optimized detection loop (throttled 5fps) -----
+      function detectLoop(time) {
+        if (!cameraActive || !video.videoWidth) { raf = requestAnimationFrame(detectLoop); return; }
+        if (time - lastDetect > 200) { // 200ms = 5fps
+          lastDetect = time;
+          if (modelsReady) {
+            detectFace().then(det => draw(det)).catch(() => draw(null));
+          } else {
+            draw(null);
+          }
+        }
+        raf = requestAnimationFrame(detectLoop);
+      }
+
+      // ----- Face detection (only when models ready) -----
+      async function detectFace() {
+        return await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
+          inputSize: 416,
+          scoreThreshold: 0.5
+        })).withFaceLandmarks(true);
+      }
+
+      // ----- Draw overlay & update AI fields -----
+      function draw(det) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!det) {
+          distanceBadge.innerHTML = '📏 no face';
+          aiFrameSize.textContent = '--';
+          aiStyle.textContent = '--';
+          hiddenFrameSize.value = '';
+          hiddenFrameStyle.value = '';
+          return;
         }
 
-        // ---------- CAMERA ----------
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user', width: 640, height: 480 } 
-                });
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    overlayCanvas.width = video.clientWidth;
-                    overlayCanvas.height = video.clientHeight;
-                    detectFaceLoop();
-                    captureBtn.disabled = false;
-                    statusDiv.innerText = 'Place your face inside the green ring and press "Capture Face"';
-                };
-            } catch (err) {
-                statusDiv.innerText = 'Camera access denied.';
-                console.error(err);
-            }
+        // Mirror context
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+
+        const box = det.detection.box;
+        const cx = box.x + box.width/2, cy = box.y + box.height/2;
+        const radius = Math.max(box.width, box.height) * 0.58;
+        const ratio = box.width / canvas.width;
+
+        // ----- Distance & frame size -----
+        let distanceText, frameSize, ringColor;
+        if (ratio < 0.22) {
+          distanceText = 'too far';
+          frameSize = '-- (move closer)';
+          ringColor = '#f59e0b';
+        } else if (ratio > 0.5) {
+          distanceText = 'too close';
+          frameSize = '-- (step back)';
+          ringColor = '#ef4444';
+        } else {
+          distanceText = 'optimal';
+          ringColor = '#10b981';
+          if (ratio < 0.28) frameSize = 'Slim (132 mm)';
+          else if (ratio > 0.47) frameSize = 'Wide (150 mm)';
+          else frameSize = 'Classic (142 mm)';
         }
 
-        // ---------- FACE DETECTION LOOP + RING OVERLAY ----------
-        async function detectFaceLoop() {
-            if (!video.paused && !video.ended) {
-                // Resize canvas to match video display size
-                if (overlayCanvas.width !== video.clientWidth || overlayCanvas.height !== video.clientHeight) {
-                    overlayCanvas.width = video.clientWidth;
-                    overlayCanvas.height = video.clientHeight;
-                }
-
-                // Draw the green ring
-                ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-                ctx.beginPath();
-                let centerX = overlayCanvas.width / 2;
-                let centerY = overlayCanvas.height / 2;
-                let radius = Math.min(overlayCanvas.width, overlayCanvas.height) * 0.3;
-                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                ctx.strokeStyle = '#00ff00';
-                ctx.lineWidth = 4;
-                ctx.stroke();
-
-                // Add text
-                ctx.font = '16px Segoe UI';
-                ctx.fillStyle = '#00ff00';
-                ctx.fillText('Align face here', centerX - 80, centerY - radius - 10);
-
-                // Detect face
-                const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                                               .withFaceLandmarks();
-                if (detections) {
-                    // Scale detection coordinates to canvas size
-                    const canvasRect = overlayCanvas.getBoundingClientRect();
-                    const videoRect = video.getBoundingClientRect();
-                    const scaleX = overlayCanvas.width / videoRect.width;
-                    const scaleY = overlayCanvas.height / videoRect.height;
-                    const box = detections.detection.box;
-                    ctx.beginPath();
-                    ctx.rect(box.x * scaleX, box.y * scaleY, box.width * scaleX, box.height * scaleY);
-                    ctx.strokeStyle = '#ffaa00';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-
-                    // Store landmarks for later use (scaled to video dimensions)
-                    const landmarks = detections.landmarks.positions;
-                    window.lastLandmarks = landmarks.map(p => ({ x: p.x, y: p.y }));
-                    window.lastDetectionBox = { x: box.x, y: box.y, width: box.width, height: box.height };
-                }
-                requestAnimationFrame(detectFaceLoop);
-            }
+        // ----- Face shape & style recommendation -----
+        let faceShape = 'Oval', styleRec = 'Aviator / Geometric';
+        if (det.landmarks) {
+          const jaw = det.landmarks.getJawOutline();
+          const jawW = Math.abs(jaw[jaw.length-1].x - jaw[0].x);
+          const hw = box.height / box.width;
+          const jr = jawW / box.width;
+          if (hw > 1.22) { faceShape = 'Long'; styleRec = 'Clubmaster / Browline'; }
+          else if (jr > 0.92) { faceShape = 'Square'; styleRec = 'Round / Oval frames'; }
+          else if (hw < 0.95) { faceShape = 'Round'; styleRec = 'Rectangular / Wayfarer'; }
+          else { faceShape = 'Oval'; styleRec = 'Aviator / Geometric'; }
         }
 
-        // ---------- CAPTURE BUTTON ----------
-        captureBtn.addEventListener('click', function() {
-            if (!window.lastLandmarks) {
-                alert('No face detected! Please position your face inside the ring.');
-                return;
-            }
+        // ----- Draw guidance ring (minimal) -----
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+        ctx.strokeStyle = ringColor;
+        ctx.lineWidth = 4;
+        if (ratio >= 0.22 && ratio <= 0.5) ctx.shadowBlur = 20; // glow when optimal
+        ctx.stroke();
+        ctx.shadowBlur = 0;
 
-            // Capture image from video
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = video.videoWidth;
-            tempCanvas.height = video.videoHeight;
-            tempCanvas.getContext('2d').drawImage(video, 0, 0);
-            capturedImageData = tempCanvas.toDataURL('image/jpeg', 0.9); // base64
+        // ----- Landmarks (tiny squares for speed) -----
+        if (det.landmarks) {
+          ctx.fillStyle = 'white';
+          ctx.shadowBlur = 6;
+          ctx.shadowColor = '#3888ff';
+          det.landmarks.positions.forEach(p => ctx.fillRect(p.x-1, p.y-1, 2, 2));
+          ctx.shadowBlur = 0;
+        }
 
-            // Perform measurements
-            const measurements = analyzeFace(window.lastLandmarks, video.videoWidth, video.videoHeight);
-            detectedMeasurements = measurements;
+        ctx.restore();
 
-            // Update UI
-            frameSizeSpan.innerText = measurements.frameSize;
-            frameTypeSpan.innerText = measurements.frameType;
-            faceWidthSpan.innerText = measurements.faceWidthMm;
-            ipdSpan.innerText = measurements.ipdMm;
-            faceShapeSpan.innerText = measurements.faceShape;
+        // ----- Update UI fields (only if changed) -----
+        distanceBadge.innerHTML = `📏 ${distanceText}`;
+        
+        if (frameSize && frameSize !== aiFrameSize.textContent) {
+          aiFrameSize.textContent = frameSize;
+          hiddenFrameSize.value = frameSize;
+          currentFaceData.frameSize = frameSize;
+        }
+        if (styleRec && styleRec !== aiStyle.textContent) {
+          aiStyle.textContent = styleRec;
+          hiddenFrameStyle.value = styleRec;
+          currentFaceData.frameStyle = styleRec;
+          currentFaceData.faceShape = faceShape;
+        }
 
-            formSection.style.display = 'block';
-            statusDiv.innerText = 'Face captured! Fill the form and send email.';
+        aiFrameHint.textContent = distanceText === 'optimal' ? '✅ locked' : 'adjust distance';
+      }
+
+      // ----- Email sending (with face capture) -----
+      async function sendEmail(payload) {
+        if (typeof Email === 'undefined') throw new Error('SMTP.js not loaded');
+
+        // Capture current frame from video (mirrored correctly)
+        const captureCanvas = document.createElement('canvas');
+        captureCanvas.width = video.videoWidth || 640;
+        captureCanvas.height = video.videoHeight || 480;
+        const capCtx = captureCanvas.getContext('2d');
+        capCtx.translate(captureCanvas.width, 0);
+        capCtx.scale(-1, 1);
+        capCtx.drawImage(video, 0, 0);
+        const imageBase64 = captureCanvas.toDataURL('image/jpeg', 0.85);
+        
+        const htmlBody = buildEmailHTML(payload, imageBase64);
+        
+        const result = await Email.send({
+          ...SMTP_CONFIG,
+          Subject: `LensAI order · ${payload.name || 'No name'} (${payload.phone || 'No phone'})`,
+          Body: htmlBody
         });
+        if (result !== 'OK') throw new Error(result);
+      }
 
-        // ---------- FACE ANALYSIS (Frame size & type) ----------
-        function analyzeFace(landmarks, imgW, imgH) {
-            // Landmark indices for 68-point model (face-api.js)
-            // Left temple ~0, right temple ~16, forehead ~19, chin ~8,
-            // left eye pupil ~39, right eye pupil ~42, etc.
-            // We'll use approximate indices.
+      // ----- Generate beautiful HTML email -----
+      function buildEmailHTML(data, img) {
+        const row = (l, v) => `<tr><td style="padding:8px 12px; color:#4b5563; text-transform:uppercase; font-size:11px; letter-spacing:0.06em; border-bottom:1px solid #e5e7eb;">${l}</td><td style="padding:8px 12px; font-weight:600; color:#111827;">${v || '—'}</td></tr>`;
+        const section = (title, rows) => `<div style="margin-bottom:24px;"><div style="font-weight:700; color:#2563eb; margin-bottom:12px;">${title}</div><table style="width:100%; border-collapse:collapse; background:#f9fafb; border-radius:12px; overflow:hidden;">${rows}</table></div>`;
+        
+        return `<!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"></head>
+        <body style="font-family:Inter, sans-serif; padding:24px; background:#f3f4f6;">
+          <div style="max-width:600px; margin:0 auto; background:white; border-radius:24px; padding:32px; box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+            <div style="font-size:28px; font-weight:800; background:linear-gradient(135deg,#2563eb,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px;">👓 LensAI Pro</div>
+            <div style="color:#6b7280; margin-bottom:32px;">Smart eyeglass order · AI‑powered fit</div>
+            
+            ${img ? `<div style="text-align:center; margin-bottom:32px;"><img src="${img}" style="max-width:100%; max-height:300px; border-radius:16px; border:2px solid #e5e7eb;"></div>` : ''}
+            
+            ${section('👤 Personal', row('Name', data.name) + row('Age', data.age) + row('DOB', data.dob) + row('Gender', data.gender) + row('Address', data.address) + row('Ward', data.ward) + row('Booth/PS', data.booth) + row('Mobile', data.phone))}
+            
+            ${section('🤖 AI Analysis', row('Frame size', data.frameSize) + row('Recommended style', data.frameStyle) + row('Face shape', currentFaceData.faceShape))}
+            
+            ${section('👓 Prescription (OD)', row('Sphere', data.odSph) + row('Cylinder', data.odCyl) + row('Axis', data.odAxis) + row('Prism', data.odPrism) + row('Base', data.odBase))}
+            
+            ${section('👓 Prescription (OS)', row('Sphere', data.osSph) + row('Cylinder', data.osCyl) + row('Axis', data.osAxis) + row('Prism', data.osPrism) + row('Base', data.osBase))}
+            
+            ${section('➕ Additional', row('Add power', data.addPower))}
+            
+            <div style="margin-top:32px; border-top:1px solid #e5e7eb; padding-top:24px; color:#9ca3af; font-size:12px; text-align:center;">
+              Generated by LensAI · Virtual Try-On System
+            </div>
+          </div>
+        </body>
+        </html>`;
+      }
 
-            function getLm(idx) {
-                return landmarks[idx] || { x: 0, y: 0 };
-            }
+      // ----- Toast notification -----
+      function toast(msg, type = 'info') {
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span><span>${msg}</span>`;
+        document.body.appendChild(el);
+        setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 4000);
+      }
 
-            // Face width: left temple (0) to right temple (16)
-            const leftTemple = getLm(0);
-            const rightTemple = getLm(16);
-            let faceWidthPx = Math.hypot(rightTemple.x - leftTemple.x, rightTemple.y - leftTemple.y);
+      // ----- Form submission -----
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Validate required fields
+        const name = $('name').value.trim();
+        const phone = $('phone').value.trim();
+        if (!name) { toast('Full name is required', 'error'); return; }
+        if (!phone || !/^\d{10}$/.test(phone)) { toast('Enter valid 10-digit mobile', 'error'); return; }
 
-            // Face height: forehead (19) to chin (8)
-            const forehead = getLm(19);
-            const chin = getLm(8);
-            let faceHeightPx = Math.hypot(chin.x - forehead.x, chin.y - forehead.y);
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>⏳</span> Sending order...';
 
-            // Interpupillary distance: left eye (39) to right eye (42)
-            const leftPupil = getLm(39);
-            const rightPupil = getLm(42);
-            let ipdPx = Math.hypot(rightPupil.x - leftPupil.x, rightPupil.y - leftPupil.y);
+        // Collect all form data
+        const formData = {
+          name, phone,
+          age: $('age').value,
+          dob: $('dob').value,
+          gender: $('gender').value,
+          address: $('address').value,
+          ward: $('ward').value,
+          booth: $('booth').value,
+          odSph: $('odSph').value, odCyl: $('odCyl').value, odAxis: $('odAxis').value,
+          odPrism: $('odPrism').value, odBase: $('odBase').value,
+          osSph: $('osSph').value, osCyl: $('osCyl').value, osAxis: $('osAxis').value,
+          osPrism: $('osPrism').value, osBase: $('osBase').value,
+          addPower: $('addPower').value,
+          frameSize: hiddenFrameSize.value || 'Not detected',
+          frameStyle: hiddenFrameStyle.value || 'Not detected'
+        };
 
-            // Jaw width: using points around jaw (4 and 12)
-            const leftJaw = getLm(4);
-            const rightJaw = getLm(12);
-            let jawWidthPx = Math.hypot(rightJaw.x - leftJaw.x, rightJaw.y - leftJaw.y);
-
-            // Forehead width: left brow (17) to right brow (26)
-            const leftBrow = getLm(17);
-            const rightBrow = getLm(26);
-            let foreheadWidthPx = Math.hypot(rightBrow.x - leftBrow.x, rightBrow.y - leftBrow.y);
-
-            // Convert pixels to mm using average IPD = 63 mm
-            const AVG_IPD_MM = 63;
-            let mmPerPx = ipdPx > 0 ? AVG_IPD_MM / ipdPx : 0.5; // fallback
-
-            let faceWidthMm = faceWidthPx * mmPerPx;
-            let faceHeightMm = faceHeightPx * mmPerPx;
-            let ipdMm = ipdPx * mmPerPx;
-            let jawWidthMm = jawWidthPx * mmPerPx;
-            let foreheadWidthMm = foreheadWidthPx * mmPerPx;
-
-            // ---- Frame size suggestion ----
-            let frameSize;
-            if (faceWidthMm < 120) frameSize = "44-46 mm (Small)";
-            else if (faceWidthMm < 130) frameSize = "48-50 mm (Medium)";
-            else if (faceWidthMm < 140) frameSize = "52-54 mm (Large)";
-            else frameSize = "56+ mm (Extra Large)";
-
-            // ---- Face shape classification ----
-            let shape = "Oval";
-            if (faceWidthMm > 0) {
-                let hwRatio = faceHeightMm / faceWidthMm;
-                let jawForeheadRatio = jawWidthMm / foreheadWidthMm;
-
-                if (hwRatio > 1.3) shape = "Oblong";
-                else if (hwRatio >= 1.1 && hwRatio <= 1.3) shape = "Oval";
-                else {
-                    if (jawForeheadRatio > 0.95) shape = "Square";
-                    else shape = "Round";
-                }
-                if (foreheadWidthMm > jawWidthMm * 1.2) shape = "Heart";
-            }
-
-            // ---- Frame type suggestion ----
-            const suggestions = {
-                "Oval": "Most styles work well – try Wayfarer or Aviator",
-                "Round": "Angular/rectangular frames to add definition",
-                "Square": "Round or oval frames to soften angles",
-                "Heart": "Bottom-heavy frames, Cat-eye, or Rimless",
-                "Oblong": "Deep frames, wayfarers, or wraparounds"
-            };
-            let frameType = suggestions[shape] || "Wayfarer (versatile)";
-
-            return {
-                faceWidthMm: Math.round(faceWidthMm * 10) / 10,
-                faceHeightMm: Math.round(faceHeightMm * 10) / 10,
-                ipdMm: Math.round(ipdMm * 10) / 10,
-                jawWidthMm: Math.round(jawWidthMm * 10) / 10,
-                foreheadWidthMm: Math.round(foreheadWidthMm * 10) / 10,
-                faceShape: shape,
-                frameSize: frameSize,
-                frameType: frameType
-            };
+        try {
+          await sendEmail(formData);
+          toast('Order sent successfully!', 'success');
+          form.reset();
+          // Keep AI fields populated
+        } catch (err) {
+          console.error(err);
+          toast('Failed to send: ' + err.message, 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>📨</span> Send order to optician';
         }
+      });
 
-        // ---------- EMAIL SENDING with EmailJS ----------
-        // ========== PASTE YOUR EMAILJS CREDENTIALS HERE ==========
-        const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';      // From EmailJS Account → API Keys
-        const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';      // The SMTP service you created
-        const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';    // The email template ID
-        const YOUR_EMAIL = 'Jagatdal106VS@gmail.com';      // Where to send the email
-        // ========================================================
+      // ----- Cleanup -----
+      window.addEventListener('beforeunload', () => {
+        if (raf) cancelAnimationFrame(raf);
+        if (stream) stream.getTracks().forEach(t => t.stop());
+      });
 
-        // Initialize EmailJS
-        (function initEmailJS() {
-            if (EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
-                emailjs.init(EMAILJS_PUBLIC_KEY);
-            }
-        })();
-
-        document.getElementById('sendBtn').addEventListener('click', function() {
-            if (!capturedImageData) {
-                alert('No captured image! Please capture your face first.');
-                return;
-            }
-            if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
-                alert('⚠️ Please set your EmailJS credentials in the script (search for "YOUR_PUBLIC_KEY").\nSee the setup instructions at the top.');
-                return;
-            }
-
-            // Collect form data
-            let formData = {
-                name: document.getElementById('name').value,
-                age: document.getElementById('age').value,
-                dob: document.getElementById('dob').value,
-                gender: document.getElementById('gender').value,
-                address: document.getElementById('address').value,
-                ward: document.getElementById('ward').value,
-                booth: document.getElementById('booth').value,
-                mobile: document.getElementById('mobile').value,
-                power: document.getElementById('power').value,
-                right_od: document.getElementById('od').value,
-                left_os: document.getElementById('os').value,
-                spherical: document.getElementById('spherical').value,
-                cylindrical: document.getElementById('cylindrical').value,
-                axis: document.getElementById('axis').value,
-                prism: document.getElementById('prism').value,
-                base: document.getElementById('base').value,
-                // Auto-detected
-                frame_size: detectedMeasurements.frameSize,
-                frame_type: detectedMeasurements.frameType,
-                face_width: detectedMeasurements.faceWidthMm + ' mm',
-                ipd: detectedMeasurements.ipdMm + ' mm',
-                face_shape: detectedMeasurements.faceShape,
-                // Image as base64 (strip header for EmailJS)
-                image: capturedImageData.split(',')[1],  // remove "data:image/jpeg;base64,"
-                to_email: YOUR_EMAIL
-            };
-
-            let statusEl = document.getElementById('emailStatus');
-            statusEl.innerHTML = '⏳ Sending email...';
-
-            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, formData)
-                .then(function(response) {
-                    statusEl.innerHTML = '✅ Email sent successfully!';
-                    statusEl.style.color = 'green';
-                }, function(error) {
-                    statusEl.innerHTML = '❌ Failed to send email. Check console.';
-                    statusEl.style.color = 'red';
-                    console.error('EmailJS error:', error);
-                });
-        });
-
-        // ---------- START ----------
-        loadModels();
-
-        // Adjust canvas when video resizes
-        window.addEventListener('resize', () => {
-            overlayCanvas.width = video.clientWidth;
-            overlayCanvas.height = video.clientHeight;
-        });
-    </script>
+      // ----- BOOT -----
+      loadModels().then(() => startCamera());
+    })();
+  </script>
 </body>
 </html>
