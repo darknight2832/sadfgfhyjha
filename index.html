@@ -1,724 +1,551 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>LensAI · Smart Order Form</title>
-  
-  <!-- Font & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  
-  <!-- Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="https://smtpjs.com/v3/smtp.js"></script>
-  
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>LensAI · Lockable Frame Size</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Face‑API -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
-    body {
-      background: #0c111c;
-      font-family: 'Inter', -apple-system, system-ui, sans-serif;
-      color: #eef2f6;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .app {
-      max-width: 1100px;
-      width: 100%;
-    }
+        body {
+            background: #0a0f1e;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-    /* Header */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
 
-    .logo {
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      background: linear-gradient(135deg, #9bb8ff, #c084fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+        h1 {
+            font-weight: 800;
+            font-size: 28px;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #a0c0ff, #c0a0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    .badge {
-      background: rgba(56, 136, 255, 0.15);
-      border: 1px solid #3888ff80;
-      border-radius: 100px;
-      padding: 8px 18px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #b8d4ff;
-    }
+        .subhead {
+            color: #8a9bb5;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
 
-    /* Grid: left (camera) + right (auto fields) */
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-bottom: 30px;
-    }
+        .camera-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            background: #000;
+        }
 
-    @media (max-width: 700px) {
-      .grid { grid-template-columns: 1fr; }
-    }
+        video, canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-    /* Camera card */
-    .camera-card {
-      background: #0f1524;
-      border-radius: 24px;
-      padding: 20px;
-      border: 1px solid #1f2a41;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
-    }
+        video {
+            transform: scaleX(-1);
+        }
 
-    .camera-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      font-size: 15px;
-      font-weight: 600;
-      color: #cbd5e6;
-    }
+        canvas {
+            pointer-events: none;
+            z-index: 10;
+        }
 
-    .camera-box {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 3/4;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #000;
-      border: 2px solid rgba(255,255,255,0.1);
-    }
+        .status-panel {
+            margin-top: 30px;
+            background: rgba(20, 30, 50, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 24px 20px;
+        }
 
-    video, canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+        .frame-size {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    video {
-      transform: scaleX(-1);
-    }
+        .frame-size.locked {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    .auto-values {
-      background: #0f1524;
-      border-radius: 24px;
-      padding: 20px;
-      border: 1px solid #1f2a41;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
+        .detail {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            color: #b0c4de;
+            font-size: 15px;
+        }
 
-    .auto-row {
-      background: #1a2333;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 16px;
-    }
+        .badge {
+            background: rgba(56,136,255,0.2);
+            border: 1px solid #3888ff;
+            border-radius: 100px;
+            padding: 6px 16px;
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #aad0ff;
+            margin-bottom: 8px;
+        }
 
-    .auto-row:last-child { margin-bottom: 0; }
+        .badge.locked {
+            background: rgba(59,130,246,0.3);
+            border-color: #3b82f6;
+            color: #bfdbfe;
+        }
 
-    .auto-label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #8ba0c0;
-      margin-bottom: 8px;
-    }
+        .note {
+            color: #6b7fa6;
+            font-size: 12px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 16px;
+        }
 
-    .auto-value {
-      font-size: 30px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #fcd34d, #fbbf24);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      line-height: 1.2;
-    }
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #94a3b8;
+        }
 
-    .auto-hint {
-      font-size: 13px;
-      color: #a0b8d4;
-      margin-top: 6px;
-    }
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: #3888ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-    /* Form */
-    .form-section {
-      background: #0f1524;
-      border-radius: 24px;
-      padding: 24px;
-      border: 1px solid #1f2a41;
-      margin-bottom: 24px;
-    }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-    .section-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #9bb8ff;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid #1f2a41;
-      padding-bottom: 12px;
-    }
+        .hidden { display: none; }
 
-    .field-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 18px;
-    }
+        .btn-lock {
+            background: rgba(56,136,255,0.2);
+            border: 1px solid #3888ff;
+            color: #aad0ff;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
 
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+        .btn-lock:hover {
+            background: rgba(56,136,255,0.3);
+            border-color: #60a5fa;
+        }
 
-    .field label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #8ba0c0;
-    }
-
-    .field input, .field select {
-      background: #1a2333;
-      border: 1px solid #2c3a52;
-      border-radius: 12px;
-      padding: 12px 14px;
-      color: white;
-      font-size: 14px;
-      font-family: inherit;
-      transition: 0.2s;
-    }
-
-    .field input:focus, .field select:focus {
-      border-color: #3888ff;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(56,136,255,0.2);
-    }
-
-    .field input[readonly] {
-      background: #1e2a3a;
-      color: #c0d0e5;
-      border-color: #3a4a62;
-    }
-
-    .row-2 {
-      grid-column: span 2;
-    }
-
-    .btn-submit {
-      width: 100%;
-      padding: 18px;
-      background: linear-gradient(135deg, #3888ff, #1e5ad9);
-      border: none;
-      border-radius: 40px;
-      color: white;
-      font-weight: 700;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: 0.2s;
-      border: 1px solid rgba(255,255,255,0.2);
-      margin-top: 12px;
-    }
-
-    .btn-submit:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(56,136,255,0.4);
-    }
-
-    .btn-submit:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .toast {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #1f2a41;
-      border-left: 6px solid #3888ff;
-      border-radius: 16px;
-      padding: 16px 24px;
-      color: white;
-      font-weight: 600;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      z-index: 9999;
-      animation: slideIn 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-
-    .hidden { display: none; }
-  </style>
+        .btn-lock.locked {
+            background: rgba(59,130,246,0.3);
+            border-color: #3b82f6;
+            color: #bfdbfe;
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    
-    <!-- Header -->
-    <div class="header">
-      <div class="logo">👓 LensAI · Smart Fit</div>
-      <div class="badge">⚡ 22‑pt facial analysis</div>
-    </div>
+    <div class="container">
+        <h1>👓 LensAI Frame Fit</h1>
+        <div class="subhead">Position your face → Lock your size</div>
 
-    <!-- Camera + Auto‑detect row -->
-    <div class="grid">
-      <!-- Left: camera -->
-      <div class="camera-card">
-        <div class="camera-title">
-          <span>📸 Face scanner</span>
-          <span style="color:#6b7fa6; font-size:12px; margin-left:auto;" id="cameraStatus">initializing...</span>
-        </div>
+        <!-- Camera + Overlay -->
         <div class="camera-box">
-          <video id="video" autoplay playsinline muted></video>
-          <canvas id="overlay"></canvas>
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay"></canvas>
         </div>
-        <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
-          <div style="background:#1a2333; border-radius:40px; padding:8px 16px; font-size:13px;">
-            <span id="distanceBadge">📏 distance: --</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- Right: auto‑detected values (live) -->
-      <div class="auto-values">
-        <div class="auto-row">
-          <div class="auto-label">🤖 AI‑detected frame size</div>
-          <div class="auto-value" id="aiFrameSize">--</div>
-          <div class="auto-hint" id="aiFrameHint">position face in the ring</div>
+        <!-- Status & Frame Size -->
+        <div class="status-panel">
+            <div class="badge" id="statusBadge">📷 Initializing camera...</div>
+            <div class="frame-size" id="frameSizeDisplay">--</div>
+            <div class="detail">
+                <span>Face distance</span>
+                <span id="distanceLabel">--</span>
+            </div>
+            <div class="detail">
+                <span>Pupillary distance (PD)</span>
+                <span id="pdDisplay">--</span>
+            </div>
+            <div class="note" id="instruction">
+                ⚡ Make sure your face is well lit and centered
+            </div>
         </div>
-        <div class="auto-row">
-          <div class="auto-label">✨ recommended style</div>
-          <div class="auto-value" id="aiStyle">--</div>
-          <div class="auto-hint">based on your face shape</div>
+
+        <!-- Lock / Unlock Button -->
+        <button class="btn-lock" id="lockBtn">
+            <span>🔒</span> Lock Frame Size
+        </button>
+
+        <!-- Loading indicator -->
+        <div id="loader" class="loading">
+            <div class="spinner"></div>
+            <span>Loading AI models...</span>
         </div>
-      </div>
     </div>
 
-    <!-- Full order form -->
-    <form id="orderForm">
-      <!-- PERSONAL INFO -->
-      <div class="form-section">
-        <div class="section-title">👤 Personal information</div>
-        <div class="field-grid">
-          <div class="field row-2">
-            <label>Full name *</label>
-            <input type="text" id="name" placeholder="e.g. Jamie Chen" autocomplete="name" required>
-          </div>
-          <div class="field">
-            <label>Age</label>
-            <input type="number" id="age" placeholder="32">
-          </div>
-          <div class="field">
-            <label>Date of birth</label>
-            <input type="date" id="dob">
-          </div>
-          <div class="field">
-            <label>Gender</label>
-            <select id="gender">
-              <option value="">Select</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="field row-2">
-            <label>Address</label>
-            <input type="text" id="address" placeholder="Full address">
-          </div>
-          <div class="field">
-            <label>Ward no</label>
-            <input type="text" id="ward" placeholder="e.g. 12">
-          </div>
-          <div class="field">
-            <label>Booth / PS no</label>
-            <input type="text" id="booth" placeholder="e.g. 45">
-          </div>
-          <div class="field row-2">
-            <label>Mobile / WhatsApp *</label>
-            <input type="tel" id="phone" placeholder="10‑digit mobile" maxlength="10" required>
-          </div>
-        </div>
-      </div>
+    <script>
+        (async function() {
+            "use strict";
 
-      <!-- PRESCRIPTION DETAILS -->
-      <div class="form-section">
-        <div class="section-title">👓 Prescription details</div>
-        
-        <!-- Right eye (OD) -->
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px; color:#9bb8ff; font-weight:600;">
-            <span>➤ Right eye (O.D.)</span>
-          </div>
-          <div class="field-grid">
-            <div class="field"><label>Spherical</label><input type="text" id="odSph" placeholder="−2.50"></div>
-            <div class="field"><label>Cylindrical</label><input type="text" id="odCyl" placeholder="−0.75"></div>
-            <div class="field"><label>Axis</label><input type="text" id="odAxis" placeholder="180"></div>
-            <div class="field"><label>Prism</label><input type="text" id="odPrism" placeholder="0.5"></div>
-            <div class="field"><label>Base</label><input type="text" id="odBase" placeholder="IN"></div>
-          </div>
-        </div>
+            // ----- DOM elements -----
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('overlay');
+            const ctx = canvas.getContext('2d');
+            const statusBadge = document.getElementById('statusBadge');
+            const frameSizeDisplay = document.getElementById('frameSizeDisplay');
+            const distanceLabel = document.getElementById('distanceLabel');
+            const pdDisplay = document.getElementById('pdDisplay');
+            const loader = document.getElementById('loader');
+            const instruction = document.getElementById('instruction');
+            const lockBtn = document.getElementById('lockBtn');
 
-        <!-- Left eye (OS) -->
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px; color:#9bb8ff; font-weight:600;">
-            <span>➤ Left eye (O.S.)</span>
-          </div>
-          <div class="field-grid">
-            <div class="field"><label>Spherical</label><input type="text" id="osSph" placeholder="−2.75"></div>
-            <div class="field"><label>Cylindrical</label><input type="text" id="osCyl" placeholder="−0.50"></div>
-            <div class="field"><label>Axis</label><input type="text" id="osAxis" placeholder="175"></div>
-            <div class="field"><label>Prism</label><input type="text" id="osPrism" placeholder="0.5"></div>
-            <div class="field"><label>Base</label><input type="text" id="osBase" placeholder="OUT"></div>
-          </div>
-        </div>
+            // ----- State -----
+            let modelsReady = false;
+            let cameraActive = false;
+            let detectionInterval = null;
+            let currentStream = null;
+            let isLocked = false;          // 🔒 lock state
+            let lockedFrameSize = '--';
+            let lockedDistance = '--';
+            let lockedPd = '--';
 
-        <!-- Additional power -->
-        <div class="field-grid" style="margin-top:12px;">
-          <div class="field"><label>Add power (near)</label><input type="text" id="addPower" placeholder="+1.00"></div>
-        </div>
-      </div>
+            // ----- Model CDNs (fallback) -----
+            const MODEL_CDNS = [
+                "https://justadudewhohacks.github.io/face-api.js/models/",
+                "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/",
+                "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/"
+            ];
 
-      <!-- Hidden fields for AI data (populated live) -->
-      <input type="hidden" id="hiddenFrameSize" name="frameSize">
-      <input type="hidden" id="hiddenFrameStyle" name="frameStyle">
+            // ----- Load face-api models -----
+            async function loadModels() {
+                statusBadge.textContent = '⏳ Loading AI models...';
+                for (const url of MODEL_CDNS) {
+                    try {
+                        await faceapi.nets.tinyFaceDetector.loadFromUri(url);
+                        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(url);
+                        // ageGenderNet not needed – removed for speed
+                        console.log(`✅ Models loaded from ${url}`);
+                        modelsReady = true;
+                        statusBadge.textContent = '✅ Ready – show your face';
+                        loader.classList.add('hidden');
+                        return;
+                    } catch (e) {
+                        console.warn(`Failed from ${url}:`, e);
+                    }
+                }
+                // If all fail – run in "offline" mode with basic capture
+                statusBadge.textContent = '⚠️ Offline mode – basic estimation';
+                modelsReady = false;
+                loader.classList.add('hidden');
+            }
 
-      <!-- Submit button -->
-      <button type="submit" class="btn-submit" id="submitBtn">
-        <span>📨</span> Send order to optician
-      </button>
-      <p style="text-align:center; color:#6b7fa6; font-size:12px; margin-top:12px;">
-        AI analysis + face image will be included in the email
-      </p>
-    </form>
-  </div>
+            // ----- Start camera -----
+            async function startCamera() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                        audio: false
+                    });
+                    video.srcObject = stream;
+                    currentStream = stream;
+                    await new Promise((resolve) => { video.onloadedmetadata = resolve; });
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    await video.play();
+                    cameraActive = true;
+                    statusBadge.textContent = modelsReady ? '✅ Ready – show your face' : '⚠️ Offline – basic capture';
+                    startDetection();
+                } catch (err) {
+                    console.error('Camera error:', err);
+                    statusBadge.textContent = '❌ Camera access denied';
+                    instruction.textContent = 'Please allow camera access and refresh.';
+                }
+            }
 
-  <!-- Toast container (dynamic) -->
-  <div id="toastContainer"></div>
+            // ----- Detection loop (only runs if NOT locked) -----
+            function startDetection() {
+                if (detectionInterval) clearInterval(detectionInterval);
+                if (isLocked) return; // don't start if already locked
+                detectionInterval = setInterval(async () => {
+                    if (!cameraActive || !video.videoWidth || isLocked) return;
+                    if (modelsReady) {
+                        await detectFace();
+                    } else {
+                        drawOfflineOverlay();
+                    }
+                }, 200);
+            }
 
-  <script>
-    (function() {
-      "use strict";
+            // ----- Stop detection (when locked) -----
+            function stopDetection() {
+                if (detectionInterval) {
+                    clearInterval(detectionInterval);
+                    detectionInterval = null;
+                }
+            }
 
-      // ----- CONFIGURATION (SMTP – YOUR CREDENTIALS) -----
-      const SMTP_CONFIG = {
-        Host: "smtp.gmail.com",
-        Username: "tusharsainivpn1@gmail.com",
-        Password: "vfxm yctc wqea zknz",  // App password (with spaces)
-        To: "Jagatdal106VS@gmail.com",
-        From: "tusharsainivpn1@gmail.com"
-      };
+            // ----- Face detection & analysis -----
+            async function detectFace() {
+                const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
+                    inputSize: 416,
+                    scoreThreshold: 0.5
+                })).withFaceLandmarks(true); // removed age/gender for speed
+                drawOverlay(det);
+            }
 
-      // ----- DOM elements (cached) -----
-      const $ = id => document.getElementById(id);
-      const video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d');
-      const cameraStatus = $('cameraStatus');
-      const distanceBadge = $('distanceBadge');
-      const aiFrameSize = $('aiFrameSize'), aiFrameHint = $('aiFrameHint'), aiStyle = $('aiStyle');
-      const hiddenFrameSize = $('hiddenFrameSize'), hiddenFrameStyle = $('hiddenFrameStyle');
-      const form = $('orderForm'), submitBtn = $('submitBtn');
+            // ----- Draw overlay and update frame size -----
+            function drawOverlay(det) {
+                // If locked, do not update any values, but we still need to draw the overlay (maybe with locked ring)
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (!det) {
+                    if (!isLocked) {
+                        ctx.font = '16px Inter';
+                        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                        ctx.shadowColor = 'black';
+                        ctx.shadowBlur = 6;
+                        ctx.fillText('👤 No face', 20, 40);
+                        ctx.shadowBlur = 0;
+                        frameSizeDisplay.textContent = '--';
+                        distanceLabel.textContent = '--';
+                        pdDisplay.textContent = '--';
+                        statusBadge.innerHTML = '👤 No face detected';
+                    }
+                    return;
+                }
 
-      // ----- State -----
-      let modelsReady = false, cameraActive = false, stream = null, raf = null, lastDetect = 0;
-      let currentFaceData = { frameSize: '--', frameStyle: '--', faceShape: 'Oval', imageBase64: null };
+                // Mirror context
+                ctx.save();
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
 
-      // ----- Load only 2 models (tinyFaceDetector + landmarks) – fastest setup -----
-      const MODEL_CDN = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/';
-      
-      async function loadModels() {
-        try {
-          await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_CDN);
-          await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_CDN);
-          modelsReady = true;
-          cameraStatus.innerHTML = '✅ ready';
-        } catch (e) {
-          console.warn('Model load failed, using fallback mode');
-          modelsReady = false;
-          cameraStatus.innerHTML = '⚠️ offline';
-          aiFrameHint.textContent = 'AI models not loaded – manual entry';
-        }
-      }
+                const box = det.detection.box;
+                const cx = box.x + box.width / 2;
+                const cy = box.y + box.height / 2;
+                const radius = Math.max(box.width, box.height) * 0.58;
+                const ratio = box.width / canvas.width;
 
-      // ----- Camera init -----
-      async function startCamera() {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
-          });
-          video.srcObject = stream;
-          await video.play();
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          cameraActive = true;
-          cameraStatus.innerHTML = modelsReady ? '✅ ready' : '⚠️ offline';
-          detectLoop();
-        } catch (e) {
-          cameraStatus.innerHTML = '❌ camera denied';
-          aiFrameHint.textContent = 'please allow camera access';
-        }
-      }
+                // Determine distance and frame size
+                let distanceStatus, ringColor, frameSize;
+                if (ratio < 0.22) {
+                    distanceStatus = 'too far';
+                    ringColor = '#f59e0b';
+                    frameSize = 'Too far – move closer';
+                } else if (ratio > 0.50) {
+                    distanceStatus = 'too close';
+                    ringColor = '#ef4444';
+                    frameSize = 'Too close – step back';
+                } else {
+                    distanceStatus = 'optimal';
+                    ringColor = '#10b981';
+                    if (ratio < 0.28) frameSize = 'Slim (132 mm)';
+                    else if (ratio > 0.47) frameSize = 'Wide (150 mm)';
+                    else frameSize = 'Classic (142 mm)';
+                }
 
-      // ----- Optimized detection loop (throttled 5fps) -----
-      function detectLoop(time) {
-        if (!cameraActive || !video.videoWidth) { raf = requestAnimationFrame(detectLoop); return; }
-        if (time - lastDetect > 200) { // 200ms = 5fps
-          lastDetect = time;
-          if (modelsReady) {
-            detectFace().then(det => draw(det)).catch(() => draw(null));
-          } else {
-            draw(null);
-          }
-        }
-        raf = requestAnimationFrame(detectLoop);
-      }
+                // If locked, override ring color to blue and use locked values
+                if (isLocked) {
+                    ringColor = '#3b82f6'; // blue
+                    // Do NOT update UI values – keep locked ones
+                }
 
-      // ----- Face detection (only when models ready) -----
-      async function detectFace() {
-        return await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
-          inputSize: 416,
-          scoreThreshold: 0.5
-        })).withFaceLandmarks(true);
-      }
+                // ----- Draw guidance ring -----
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius + 6, 0, 2 * Math.PI);
+                ctx.strokeStyle = ringColor + '80';
+                ctx.lineWidth = 12;
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = ringColor;
+                ctx.stroke();
 
-      // ----- Draw overlay & update AI fields -----
-      function draw(det) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (!det) {
-          distanceBadge.innerHTML = '📏 no face';
-          aiFrameSize.textContent = '--';
-          aiStyle.textContent = '--';
-          hiddenFrameSize.value = '';
-          hiddenFrameStyle.value = '';
-          return;
-        }
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+                ctx.strokeStyle = ringColor;
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 24;
+                ctx.stroke();
 
-        // Mirror context
-        ctx.save();
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
+                // Dashed inner ring (only if not locked to save CPU)
+                if (!isLocked) {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius - 12, 0, 2 * Math.PI);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 0;
+                    ctx.setLineDash([8, 12]);
+                    ctx.lineDashOffset = -((Date.now() * 0.02) % 20);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
 
-        const box = det.detection.box;
-        const cx = box.x + box.width/2, cy = box.y + box.height/2;
-        const radius = Math.max(box.width, box.height) * 0.58;
-        const ratio = box.width / canvas.width;
+                // ----- Draw landmarks (small dots) -----
+                if (det.landmarks && !isLocked) {
+                    const pts = det.landmarks.positions;
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = '#3888ff';
+                    pts.forEach(p => {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, 1.8, 0, 2 * Math.PI);
+                        ctx.fill();
+                    });
+                }
 
-        // ----- Distance & frame size -----
-        let distanceText, frameSize, ringColor;
-        if (ratio < 0.22) {
-          distanceText = 'too far';
-          frameSize = '-- (move closer)';
-          ringColor = '#f59e0b';
-        } else if (ratio > 0.5) {
-          distanceText = 'too close';
-          frameSize = '-- (step back)';
-          ringColor = '#ef4444';
-        } else {
-          distanceText = 'optimal';
-          ringColor = '#10b981';
-          if (ratio < 0.28) frameSize = 'Slim (132 mm)';
-          else if (ratio > 0.47) frameSize = 'Wide (150 mm)';
-          else frameSize = 'Classic (142 mm)';
-        }
+                ctx.restore();
 
-        // ----- Face shape & style recommendation -----
-        let faceShape = 'Oval', styleRec = 'Aviator / Geometric';
-        if (det.landmarks) {
-          const jaw = det.landmarks.getJawOutline();
-          const jawW = Math.abs(jaw[jaw.length-1].x - jaw[0].x);
-          const hw = box.height / box.width;
-          const jr = jawW / box.width;
-          if (hw > 1.22) { faceShape = 'Long'; styleRec = 'Clubmaster / Browline'; }
-          else if (jr > 0.92) { faceShape = 'Square'; styleRec = 'Round / Oval frames'; }
-          else if (hw < 0.95) { faceShape = 'Round'; styleRec = 'Rectangular / Wayfarer'; }
-          else { faceShape = 'Oval'; styleRec = 'Aviator / Geometric'; }
-        }
+                // ----- Update UI with frame size and metrics (only if NOT locked) -----
+                if (!isLocked) {
+                    frameSizeDisplay.textContent = frameSize;
+                    distanceLabel.textContent = distanceStatus;
 
-        // ----- Draw guidance ring (minimal) -----
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, 2*Math.PI);
-        ctx.strokeStyle = ringColor;
-        ctx.lineWidth = 4;
-        if (ratio >= 0.22 && ratio <= 0.5) ctx.shadowBlur = 20; // glow when optimal
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+                    // Estimate PD if landmarks exist
+                    if (det.landmarks) {
+                        const lm = det.landmarks;
+                        const leftEye = lm.getLeftEye();
+                        const rightEye = lm.getRightEye();
+                        const lPupil = leftEye[Math.floor(leftEye.length / 2)];
+                        const rPupil = rightEye[Math.floor(rightEye.length / 2)];
+                        const pdPx = Math.abs(rPupil.x - lPupil.x);
+                        const estimatedPdMm = Math.round((pdPx / canvas.width) * 140);
+                        pdDisplay.textContent = estimatedPdMm + ' mm';
+                    } else {
+                        pdDisplay.textContent = '--';
+                    }
 
-        // ----- Landmarks (tiny squares for speed) -----
-        if (det.landmarks) {
-          ctx.fillStyle = 'white';
-          ctx.shadowBlur = 6;
-          ctx.shadowColor = '#3888ff';
-          det.landmarks.positions.forEach(p => ctx.fillRect(p.x-1, p.y-1, 2, 2));
-          ctx.shadowBlur = 0;
-        }
+                    // Update badge
+                    if (distanceStatus === 'optimal') {
+                        statusBadge.innerHTML = '✅ Face locked · ' + frameSize;
+                        statusBadge.style.background = 'rgba(16,185,129,0.2)';
+                        statusBadge.style.borderColor = '#10b981';
+                    } else if (distanceStatus === 'too far') {
+                        statusBadge.innerHTML = '⬅️ Move closer';
+                        statusBadge.style.background = 'rgba(245,158,11,0.2)';
+                        statusBadge.style.borderColor = '#f59e0b';
+                    } else if (distanceStatus === 'too close') {
+                        statusBadge.innerHTML = '➡️ Step back';
+                        statusBadge.style.background = 'rgba(239,68,68,0.2)';
+                        statusBadge.style.borderColor = '#ef4444';
+                    }
+                }
+            }
 
-        ctx.restore();
+            // ----- Fallback when no models -----
+            function drawOfflineOverlay() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '16px Inter';
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = 'black';
+                ctx.fillText('⚠️ Offline mode', 20, 40);
+                ctx.shadowBlur = 0;
+                if (!isLocked) {
+                    frameSizeDisplay.textContent = '-- (offline)';
+                    distanceLabel.textContent = '--';
+                    pdDisplay.textContent = '--';
+                }
+            }
 
-        // ----- Update UI fields (only if changed) -----
-        distanceBadge.innerHTML = `📏 ${distanceText}`;
-        
-        if (frameSize && frameSize !== aiFrameSize.textContent) {
-          aiFrameSize.textContent = frameSize;
-          hiddenFrameSize.value = frameSize;
-          currentFaceData.frameSize = frameSize;
-        }
-        if (styleRec && styleRec !== aiStyle.textContent) {
-          aiStyle.textContent = styleRec;
-          hiddenFrameStyle.value = styleRec;
-          currentFaceData.frameStyle = styleRec;
-          currentFaceData.faceShape = faceShape;
-        }
+            // ----- Lock / Unlock handler -----
+            function toggleLock() {
+                if (!isLocked) {
+                    // Lock: store current values, stop detection, change UI
+                    if (frameSizeDisplay.textContent && frameSizeDisplay.textContent !== '--') {
+                        lockedFrameSize = frameSizeDisplay.textContent;
+                        lockedDistance = distanceLabel.textContent;
+                        lockedPd = pdDisplay.textContent;
+                    } else {
+                        // No valid frame yet – cannot lock
+                        alert('Position your face first to get a frame size.');
+                        return;
+                    }
+                    isLocked = true;
+                    stopDetection();
+                    
+                    // Update UI to locked state
+                    frameSizeDisplay.classList.add('locked');
+                    statusBadge.classList.add('locked');
+                    lockBtn.classList.add('locked');
+                    lockBtn.innerHTML = '<span>🔓</span> Unlock Frame Size';
+                    statusBadge.innerHTML = '🔒 Locked · ' + lockedFrameSize;
+                    statusBadge.style.background = 'rgba(59,130,246,0.3)';
+                    statusBadge.style.borderColor = '#3b82f6';
+                    instruction.textContent = '✅ Frame size locked – you can now fill your order.';
+                } else {
+                    // Unlock: resume detection, revert UI
+                    isLocked = false;
+                    frameSizeDisplay.classList.remove('locked');
+                    statusBadge.classList.remove('locked');
+                    lockBtn.classList.remove('locked');
+                    lockBtn.innerHTML = '<span>🔒</span> Lock Frame Size';
+                    statusBadge.innerHTML = '✅ Ready – show your face';
+                    statusBadge.style.background = 'rgba(56,136,255,0.2)';
+                    statusBadge.style.borderColor = '#3888ff';
+                    instruction.textContent = '⚡ Make sure your face is well lit and centered';
+                    startDetection();
+                }
+            }
 
-        aiFrameHint.textContent = distanceText === 'optimal' ? '✅ locked' : 'adjust distance';
-      }
+            // ----- Cleanup -----
+            window.addEventListener('beforeunload', () => {
+                if (currentStream) {
+                    currentStream.getTracks().forEach(t => t.stop());
+                }
+                if (detectionInterval) clearInterval(detectionInterval);
+            });
 
-      // ----- Email sending (with face capture) -----
-      async function sendEmail(payload) {
-        if (typeof Email === 'undefined') throw new Error('SMTP.js not loaded');
+            // ----- Event listeners -----
+            lockBtn.addEventListener('click', toggleLock);
 
-        // Capture current frame from video (mirrored correctly)
-        const captureCanvas = document.createElement('canvas');
-        captureCanvas.width = video.videoWidth || 640;
-        captureCanvas.height = video.videoHeight || 480;
-        const capCtx = captureCanvas.getContext('2d');
-        capCtx.translate(captureCanvas.width, 0);
-        capCtx.scale(-1, 1);
-        capCtx.drawImage(video, 0, 0);
-        const imageBase64 = captureCanvas.toDataURL('image/jpeg', 0.85);
-        
-        const htmlBody = buildEmailHTML(payload, imageBase64);
-        
-        const result = await Email.send({
-          ...SMTP_CONFIG,
-          Subject: `LensAI order · ${payload.name || 'No name'} (${payload.phone || 'No phone'})`,
-          Body: htmlBody
-        });
-        if (result !== 'OK') throw new Error(result);
-      }
-
-      // ----- Generate beautiful HTML email -----
-      function buildEmailHTML(data, img) {
-        const row = (l, v) => `<tr><td style="padding:8px 12px; color:#4b5563; text-transform:uppercase; font-size:11px; letter-spacing:0.06em; border-bottom:1px solid #e5e7eb;">${l}</td><td style="padding:8px 12px; font-weight:600; color:#111827;">${v || '—'}</td></tr>`;
-        const section = (title, rows) => `<div style="margin-bottom:24px;"><div style="font-weight:700; color:#2563eb; margin-bottom:12px;">${title}</div><table style="width:100%; border-collapse:collapse; background:#f9fafb; border-radius:12px; overflow:hidden;">${rows}</table></div>`;
-        
-        return `<!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family:Inter, sans-serif; padding:24px; background:#f3f4f6;">
-          <div style="max-width:600px; margin:0 auto; background:white; border-radius:24px; padding:32px; box-shadow:0 8px 24px rgba(0,0,0,0.08);">
-            <div style="font-size:28px; font-weight:800; background:linear-gradient(135deg,#2563eb,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px;">👓 LensAI Pro</div>
-            <div style="color:#6b7280; margin-bottom:32px;">Smart eyeglass order · AI‑powered fit</div>
-            
-            ${img ? `<div style="text-align:center; margin-bottom:32px;"><img src="${img}" style="max-width:100%; max-height:300px; border-radius:16px; border:2px solid #e5e7eb;"></div>` : ''}
-            
-            ${section('👤 Personal', row('Name', data.name) + row('Age', data.age) + row('DOB', data.dob) + row('Gender', data.gender) + row('Address', data.address) + row('Ward', data.ward) + row('Booth/PS', data.booth) + row('Mobile', data.phone))}
-            
-            ${section('🤖 AI Analysis', row('Frame size', data.frameSize) + row('Recommended style', data.frameStyle) + row('Face shape', currentFaceData.faceShape))}
-            
-            ${section('👓 Prescription (OD)', row('Sphere', data.odSph) + row('Cylinder', data.odCyl) + row('Axis', data.odAxis) + row('Prism', data.odPrism) + row('Base', data.odBase))}
-            
-            ${section('👓 Prescription (OS)', row('Sphere', data.osSph) + row('Cylinder', data.osCyl) + row('Axis', data.osAxis) + row('Prism', data.osPrism) + row('Base', data.osBase))}
-            
-            ${section('➕ Additional', row('Add power', data.addPower))}
-            
-            <div style="margin-top:32px; border-top:1px solid #e5e7eb; padding-top:24px; color:#9ca3af; font-size:12px; text-align:center;">
-              Generated by LensAI · Virtual Try-On System
-            </div>
-          </div>
-        </body>
-        </html>`;
-      }
-
-      // ----- Toast notification -----
-      function toast(msg, type = 'info') {
-        const el = document.createElement('div');
-        el.className = 'toast';
-        el.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span><span>${msg}</span>`;
-        document.body.appendChild(el);
-        setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 4000);
-      }
-
-      // ----- Form submission -----
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Validate required fields
-        const name = $('name').value.trim();
-        const phone = $('phone').value.trim();
-        if (!name) { toast('Full name is required', 'error'); return; }
-        if (!phone || !/^\d{10}$/.test(phone)) { toast('Enter valid 10-digit mobile', 'error'); return; }
-
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span>⏳</span> Sending order...';
-
-        // Collect all form data
-        const formData = {
-          name, phone,
-          age: $('age').value,
-          dob: $('dob').value,
-          gender: $('gender').value,
-          address: $('address').value,
-          ward: $('ward').value,
-          booth: $('booth').value,
-          odSph: $('odSph').value, odCyl: $('odCyl').value, odAxis: $('odAxis').value,
-          odPrism: $('odPrism').value, odBase: $('odBase').value,
-          osSph: $('osSph').value, osCyl: $('osCyl').value, osAxis: $('osAxis').value,
-          osPrism: $('osPrism').value, osBase: $('osBase').value,
-          addPower: $('addPower').value,
-          frameSize: hiddenFrameSize.value || 'Not detected',
-          frameStyle: hiddenFrameStyle.value || 'Not detected'
-        };
-
-        try {
-          await sendEmail(formData);
-          toast('Order sent successfully!', 'success');
-          form.reset();
-          // Keep AI fields populated
-        } catch (err) {
-          console.error(err);
-          toast('Failed to send: ' + err.message, 'error');
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<span>📨</span> Send order to optician';
-        }
-      });
-
-      // ----- Cleanup -----
-      window.addEventListener('beforeunload', () => {
-        if (raf) cancelAnimationFrame(raf);
-        if (stream) stream.getTracks().forEach(t => t.stop());
-      });
-
-      // ----- BOOT -----
-      loadModels().then(() => startCamera());
-    })();
-  </script>
+            // ----- Start everything -----
+            await loadModels();
+            await startCamera();
+        })();
+    </script>
 </body>
 </html>
