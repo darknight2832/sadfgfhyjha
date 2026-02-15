@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>LensAI · precision fit + customer form</title>
+    <title>LensAI · precision fit 118–147 mm</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <!-- Face‑API (CNN models) -->
@@ -293,7 +293,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>⍟ LensAI · precision fit</h1>
+    <h1>⍟ LensAI · precision fit 118–147 mm</h1>
     <div class="subhead">CNN analysis • mm‑accurate frame size • customer intake</div>
 
     <!-- camera + overlay -->
@@ -350,7 +350,7 @@
 
             <!-- Auto-detected fields (readonly) -->
             <div style="margin: 18px 0 10px; background:#1b2845; border-radius: 24px; padding: 14px;">
-                <div class="detail-row"><span>📐 Detected frame size</span> <span id="detectedFrameSize" class="readonly-field" style="padding:4px 12px;">--</span></div>
+                <div class="detail-row"><span>📐 Recommended frame size (total width)</span> <span id="detectedFrameSize" class="readonly-field" style="padding:4px 12px;">--</span></div>
                 <div class="detail-row"><span>🕶️ Suggested frame type</span> <span id="detectedFrameType" class="readonly-field" style="padding:4px 12px;">--</span></div>
             </div>
 
@@ -416,7 +416,7 @@
     let currentStream = null;
     let detectionInterval = null;
     let lastDetection = null;                // latest detection result
-    let lastFrameSizeMm = 0;                 // calculated frame width in mm
+    let lastRecommendedFrameMm = 0;           // recommended total frame width (118–147)
     let lastFrameType = '';                  // recommendation string
     let lastPdMm = 0;
     let lastShape = '';
@@ -426,6 +426,8 @@
 
     // constants
     const AVERAGE_PD_MM = 63;                // reference adult PD
+    const MIN_FRAME_MM = 118;
+    const MAX_FRAME_MM = 147;
 
     // ----- load stored entries from localStorage -----
     function loadEntries() {
@@ -609,7 +611,7 @@
         ctx.restore();
     }
 
-    // ----- update text fields, calculate frame mm, frame type -----
+    // ----- update text fields, calculate frame mm (118–147), frame type -----
     function updateMetrics(det) {
         if (!det) {
             frameSizeDisplay.textContent = '--';
@@ -628,9 +630,9 @@
         else if (faceRatio > 0.5) distanceStatus = 'too close';
         else distanceStatus = 'optimal';
 
-        // ----- compute PD in mm -----
-        let pdValue = '--';
+        // ----- compute PD in mm and face width in mm -----
         let pdPx = null;
+        let faceWidthMm = 0;
         if (det.landmarks) {
             const leftEye = det.landmarks.getLeftEye();
             const rightEye = det.landmarks.getRightEye();
@@ -638,26 +640,26 @@
             const r = rightEye[Math.floor(rightEye.length/2)];
             pdPx = Math.abs(r.x - l.x);
             if (pdPx > 0) {
-                const pdMmEst = Math.round((pdPx / canvas.width) * 140); // fallback but we refine below
-                pdValue = pdMmEst + '';
+                const mmPerPx = AVERAGE_PD_MM / pdPx;
+                faceWidthMm = Math.round(box.width * mmPerPx);
             }
         }
-
-        // ----- face width in mm using PD reference -----
-        let faceWidthMm = 0;
-        if (pdPx && det.landmarks) {
-            // use actual PD pixels to scale: 1px = AVERAGE_PD_MM / pdPx mm
-            const mmPerPx = AVERAGE_PD_MM / pdPx;
-            faceWidthMm = Math.round(box.width * mmPerPx);
-        } else {
+        if (faceWidthMm === 0) {
             // fallback using average face width ~145mm and ratio
             faceWidthMm = Math.round(145 * (box.width / canvas.width));
         }
-        // frame size recommendation (frame should be slightly wider than face)
-        let frameSizeText = faceWidthMm + ' mm face width';
-        if (faceWidthMm < 130) frameSizeText = 'Slim (≤' + faceWidthMm + ' mm)';
-        else if (faceWidthMm > 155) frameSizeText = 'Wide (' + faceWidthMm + ' mm)';
-        else frameSizeText = 'Classic (' + faceWidthMm + ' mm)';
+
+        // ----- recommended total frame width (118–147) -----
+        // typical frame adds ~12mm to face width, then clamp
+        let rawRecommended = faceWidthMm + 12;
+        let recommendedFrame = Math.min(MAX_FRAME_MM, Math.max(MIN_FRAME_MM, rawRecommended));
+        lastRecommendedFrameMm = recommendedFrame;
+
+        // ----- PD display (using same scaling) -----
+        let pdValue = '--';
+        if (pdPx) {
+            pdValue = Math.round((pdPx / canvas.width) * 140) + ' mm';
+        }
 
         // ----- face shape -----
         let shape = 'oval';
@@ -669,6 +671,7 @@
             else if (ratioWH >= 1.1) shape = 'long';
             else shape = 'square';
         }
+        lastShape = shape;
 
         // ----- frame type suggestion based on shape, gender, age -----
         let gender = det.gender || 'neutral';
@@ -682,17 +685,12 @@
         else suggestion = 'classic rectangle';
         if (gender === 'female' && age < 35) suggestion += ' · trendy';
         else if (gender === 'male' && age > 45) suggestion += ' · conservative';
-
-        // store globally for later use
-        lastFrameSizeMm = faceWidthMm;
         lastFrameType = suggestion;
-        lastPdMm = pdPx ? Math.round(AVERAGE_PD_MM) : 0; // we already used PD for scaling
-        lastShape = shape;
 
         // update DOM
-        frameSizeDisplay.textContent = frameSizeText;
+        frameSizeDisplay.textContent = recommendedFrame + ' mm';
         distanceLabel.textContent = distanceStatus;
-        pdDisplay.textContent = (pdPx ? Math.round((pdPx / canvas.width) * 140) : '--') + ' mm';
+        pdDisplay.textContent = pdValue;
         shapeDisplay.textContent = shape;
 
         // enable/disable capture
@@ -716,7 +714,7 @@
             alert('No face data. Please capture again.');
             return;
         }
-        detectedFrameSpan.textContent = lastFrameSizeMm ? lastFrameSizeMm + ' mm' : '--';
+        detectedFrameSpan.textContent = lastRecommendedFrameMm ? lastRecommendedFrameMm + ' mm' : '--';
         detectedTypeSpan.textContent = lastFrameType || '--';
         // Optionally prefill gender from detection
         if (lastDetection.gender) {
@@ -775,7 +773,7 @@
             ward: ward,
             booth: booth,
             mobile: mobile,
-            frameSize: lastFrameSizeMm + ' mm',
+            frameSize: lastRecommendedFrameMm + ' mm',
             shape: lastShape,
             frameType: lastFrameType,
             pd: lastPdMm,
@@ -791,7 +789,7 @@
         modal.classList.remove('active');
         detailsForm.reset(); // optional, but keep detected values for next?
         // re-show detected frame fields as they were before reset
-        detectedFrameSpan.textContent = lastFrameSizeMm + ' mm';
+        detectedFrameSpan.textContent = lastRecommendedFrameMm + ' mm';
         detectedTypeSpan.textContent = lastFrameType;
     });
 
