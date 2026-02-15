@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>LensAI · precision fit 118–147 mm</title>
+    <title>LensAI · </title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <!-- Face‑API (CNN models) -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
+        /* (same styles as before) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0b1120;
@@ -117,6 +118,37 @@
             transform: none;
             box-shadow: 0 5px 0 #121c30;
             pointer-events: none;
+        }
+        .video-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(145deg, #e63946, #c92a3a);
+            color: white;
+            font-weight: 800;
+            font-size: 20px;
+            padding: 16px 32px;
+            border-radius: 60px;
+            text-decoration: none;
+            margin: 10px 0 20px;
+            width: 100%;
+            border: 2px solid #ffb3b3;
+            box-shadow: 0 10px 0 #7f1d1d, 0 10px 30px rgba(230, 57, 70, 0.5);
+            transition: all 0.1s ease;
+            letter-spacing: 1px;
+        }
+        .video-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 0 #7f1d1d, 0 15px 30px rgba(230, 57, 70, 0.6);
+        }
+        .video-button:active {
+            transform: translateY(5px);
+            box-shadow: 0 5px 0 #7f1d1d;
+        }
+        .video-button .icon {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 2px black);
         }
         .gallery {
             background: #0f1a2b;
@@ -293,8 +325,8 @@
 </head>
 <body>
 <div class="container">
-    <h1>⍟ LensAI · precision fit 118–147 mm</h1>
-    <div class="subhead">CNN analysis • mm‑accurate frame size • customer intake</div>
+    <h1>⍟ LensAI · age‑adjusted fit 118–147 mm</h1>
+    <div class="subhead">CNN analysis • PD scaled by age • customer intake</div>
 
     <!-- camera + overlay -->
     <div class="camera-box">
@@ -315,6 +347,11 @@
     <button class="capture-btn" id="captureBtn" disabled>
         <span>📸</span> CAPTURE & ENTER DETAILS
     </button>
+
+    <!-- attractive video button -->
+    <a href="https://www.facebook.com/share/v/1De7qG61aG/" target="_blank" class="video-button">
+        <span class="icon">▶</span> WATCH FITTING VIDEO
+    </a>
 
     <!-- gallery of previous captures -->
     <div class="gallery">
@@ -418,16 +455,22 @@
     let lastDetection = null;                // latest detection result
     let lastRecommendedFrameMm = 0;           // recommended total frame width (118–147)
     let lastFrameType = '';                  // recommendation string
-    let lastPdMm = 0;
+    let lastPdMm = 0;                         // estimated PD in mm (age-adjusted)
     let lastShape = '';
 
     // collection of saved entries (max 15)
     let entries = [];
 
     // constants
-    const AVERAGE_PD_MM = 63;                // reference adult PD
     const MIN_FRAME_MM = 118;
     const MAX_FRAME_MM = 147;
+
+    // ----- helper: estimate average PD based on age (years) -----
+    function estimatePdFromAge(age) {
+        if (age < 13) return 55;      // child
+        if (age < 18) return 60;      // teenager
+        return 63;                     // adult
+    }
 
     // ----- load stored entries from localStorage -----
     function loadEntries() {
@@ -611,7 +654,7 @@
         ctx.restore();
     }
 
-    // ----- update text fields, calculate frame mm (118–147), frame type -----
+    // ----- update text fields, calculate frame mm (118–147) with age-adjusted PD -----
     function updateMetrics(det) {
         if (!det) {
             frameSizeDisplay.textContent = '--';
@@ -630,7 +673,11 @@
         else if (faceRatio > 0.5) distanceStatus = 'too close';
         else distanceStatus = 'optimal';
 
-        // ----- compute PD in mm and face width in mm -----
+        // ----- get age from detection (default 30) -----
+        const rawAge = det.age ? Math.round(det.age) : 30;
+        const estimatedPdRef = estimatePdFromAge(rawAge);  // reference PD in mm based on age
+
+        // ----- compute PD in pixels and face width in mm -----
         let pdPx = null;
         let faceWidthMm = 0;
         if (det.landmarks) {
@@ -640,26 +687,27 @@
             const r = rightEye[Math.floor(rightEye.length/2)];
             pdPx = Math.abs(r.x - l.x);
             if (pdPx > 0) {
-                const mmPerPx = AVERAGE_PD_MM / pdPx;
+                const mmPerPx = estimatedPdRef / pdPx;
                 faceWidthMm = Math.round(box.width * mmPerPx);
             }
         }
         if (faceWidthMm === 0) {
-            // fallback using average face width ~145mm and ratio
+            // fallback using average face width ~145mm and ratio (less accurate)
             faceWidthMm = Math.round(145 * (box.width / canvas.width));
         }
 
-        // ----- recommended total frame width (118–147) -----
-        // typical frame adds ~12mm to face width, then clamp
+        // ----- recommended total frame width (add 12mm, then clamp) -----
         let rawRecommended = faceWidthMm + 12;
         let recommendedFrame = Math.min(MAX_FRAME_MM, Math.max(MIN_FRAME_MM, rawRecommended));
         lastRecommendedFrameMm = recommendedFrame;
 
-        // ----- PD display (using same scaling) -----
+        // ----- estimated PD in mm (just for display) -----
         let pdValue = '--';
         if (pdPx) {
-            pdValue = Math.round((pdPx / canvas.width) * 140) + ' mm';
+            // use the age-adjusted reference to compute actual PD estimate in mm (which is exactly estimatedPdRef)
+            pdValue = estimatedPdRef + ' mm';
         }
+        lastPdMm = estimatedPdRef;   // store the reference PD
 
         // ----- face shape -----
         let shape = 'oval';
@@ -675,7 +723,7 @@
 
         // ----- frame type suggestion based on shape, gender, age -----
         let gender = det.gender || 'neutral';
-        let age = det.age ? Math.round(det.age) : 30;
+        let age = rawAge;
         let suggestion = '';
         if (shape === 'round') suggestion = 'angular / square frames';
         else if (shape === 'oval') suggestion = 'aviators, wayfarers';
@@ -716,7 +764,7 @@
         }
         detectedFrameSpan.textContent = lastRecommendedFrameMm ? lastRecommendedFrameMm + ' mm' : '--';
         detectedTypeSpan.textContent = lastFrameType || '--';
-        // Optionally prefill gender from detection
+        // Prefill gender and age from detection if available
         if (lastDetection.gender) {
             document.getElementById('genderSelect').value = lastDetection.gender.toLowerCase();
         }
@@ -787,7 +835,7 @@
         saveEntries();
 
         modal.classList.remove('active');
-        detailsForm.reset(); // optional, but keep detected values for next?
+        detailsForm.reset();
         // re-show detected frame fields as they were before reset
         detectedFrameSpan.textContent = lastRecommendedFrameMm + ' mm';
         detectedTypeSpan.textContent = lastFrameType;
