@@ -3,549 +3,811 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>LensAI · Lockable Frame Size</title>
-    
+    <title>LensAI · precision fit + customer form</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <!-- Face‑API -->
+    <!-- Face‑API (CNN models) -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0a0f1e;
+            background: #0b1120;
             font-family: 'Inter', sans-serif;
-            color: white;
+            color: #e2e8f0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 16px 12px;
         }
-
         .container {
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
-            text-align: center;
         }
-
         h1 {
             font-weight: 800;
             font-size: 28px;
             letter-spacing: -0.5px;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #a0c0ff, #c0a0ff);
+            margin-bottom: 4px;
+            background: linear-gradient(145deg, #b4c6ff, #d6b0ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         .subhead {
-            color: #8a9bb5;
-            margin-bottom: 24px;
+            color: #9aaec9;
             font-size: 14px;
+            margin-bottom: 18px;
         }
-
         .camera-box {
             position: relative;
             width: 100%;
-            aspect-ratio: 3 / 4;
-            border-radius: 24px;
+            aspect-ratio: 3/4;
+            border-radius: 28px;
             overflow: hidden;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            background: #000;
+            border: 2px solid rgba(255,215,100,0.3);
+            box-shadow: 0 20px 35px -8px #00000080;
+            background: #0f172a;
         }
-
         video, canvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             object-fit: cover;
         }
-
-        video {
-            transform: scaleX(-1);
-        }
-
-        canvas {
-            pointer-events: none;
-            z-index: 10;
-        }
-
+        video { transform: scaleX(-1); }
+        canvas { pointer-events: none; z-index: 10; }
         .status-panel {
-            margin-top: 30px;
-            background: rgba(20, 30, 50, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 24px 20px;
+            margin: 20px 0 16px;
+            background: rgba(20,30,55,0.8);
+            backdrop-filter: blur(16px);
+            border: 1px solid #2d3a5e;
+            border-radius: 28px;
+            padding: 20px 18px;
         }
-
         .frame-size {
             font-size: 32px;
             font-weight: 800;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            line-height: 1.2;
+            background: linear-gradient(145deg, #fcd34d, #fbbf24);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        .frame-size.locked {
-            background: linear-gradient(135deg, #60a5fa, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .detail {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 16px;
-            color: #b0c4de;
-            font-size: 15px;
-        }
-
         .badge {
-            background: rgba(56,136,255,0.2);
-            border: 1px solid #3888ff;
-            border-radius: 100px;
+            background: #1e2a47;
+            border: 1px solid #3b4e7a;
+            border-radius: 40px;
             padding: 6px 16px;
-            display: inline-block;
             font-size: 13px;
             font-weight: 600;
-            color: #aad0ff;
+            color: #cbd5e1;
+            display: inline-block;
             margin-bottom: 8px;
         }
-
-        .badge.locked {
-            background: rgba(59,130,246,0.3);
-            border-color: #3b82f6;
-            color: #bfdbfe;
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 14px;
+            color: #b8c7e7;
+            font-size: 15px;
+            border-bottom: 1px dashed #2f3d60;
+            padding-bottom: 8px;
         }
-
-        .note {
-            color: #6b7fa6;
+        .capture-btn {
+            background: #2f3e6b;
+            border: none;
+            width: 100%;
+            padding: 18px 0;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 20px;
+            color: #f0f4ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 18px 0 14px;
+            transition: 0.15s;
+            box-shadow: 0 8px 0 #121c30;
+            cursor: pointer;
+        }
+        .capture-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #121c30; }
+        .capture-btn:disabled {
+            opacity: 0.4;
+            transform: none;
+            box-shadow: 0 5px 0 #121c30;
+            pointer-events: none;
+        }
+        .gallery {
+            background: #0f1a2b;
+            border-radius: 28px;
+            padding: 18px 14px;
+            border: 1px solid #293856;
+        }
+        .gallery h3 {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 14px;
+            color: #bdd3ff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .capture-grid {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: #3e5275 #1e2a3a;
+        }
+        .capture-grid::-webkit-scrollbar { height: 6px; }
+        .capture-grid::-webkit-scrollbar-thumb { background: #3e5a88; border-radius: 10px; }
+        .capture-card {
+            min-width: 160px;
+            background: #152237;
+            border-radius: 20px;
+            padding: 12px 10px;
+            border: 1px solid #33485f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .thumb {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 16px;
+            background: #1e2c40;
+            object-fit: cover;
+            border: 2px solid #4b618b;
+        }
+        .rec-tag {
+            font-weight: 700;
+            font-size: 14px;
+            margin: 8px 0 3px;
+            background: #293d60;
+            padding: 4px 12px;
+            border-radius: 40px;
+            color: #e0ebff;
+        }
+        .meta-small {
+            font-size: 11px;
+            color: #8fa3cd;
+        }
+        .clear-btn {
+            background: none;
+            border: 1px solid #4a5e89;
+            color: #bdd3ff;
+            padding: 6px 14px;
+            border-radius: 30px;
             font-size: 12px;
-            margin-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 16px;
+            margin-left: 12px;
+            cursor: pointer;
         }
-
         .loading {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
-            color: #94a3b8;
+            color: #9cb1d4;
         }
-
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.2);
-            border-top-color: #3888ff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
+        .spinner { width: 18px; height: 18px; border: 2px solid #2b4168; border-top-color: #70a0ff; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .hidden { display: none; }
+        .note { color: #738ab8; font-size: 12px; margin-top: 12px; }
 
-        .btn-lock {
-            background: rgba(56,136,255,0.2);
-            border: 1px solid #3888ff;
-            color: #aad0ff;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 20px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
+        /* Modal overlay for form */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            z-index: 1000;
+            padding: 16px;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #172237;
+            border-radius: 32px;
+            max-width: 500px;
             width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 28px 24px;
+            border: 1px solid #3f5680;
+            box-shadow: 0 25px 50px -12px black;
         }
-
-        .btn-lock:hover {
-            background: rgba(56,136,255,0.3);
-            border-color: #60a5fa;
+        .modal-content h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #d0e0ff;
         }
-
-        .btn-lock.locked {
-            background: rgba(59,130,246,0.3);
-            border-color: #3b82f6;
-            color: #bfdbfe;
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px 12px;
+        }
+        .full-width { grid-column: span 2; }
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a5bbdf;
+            display: block;
+            margin-bottom: 4px;
+        }
+        input, select, textarea {
+            width: 100%;
+            background: #0d1a2c;
+            border: 1px solid #334e77;
+            border-radius: 18px;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+        textarea { resize: vertical; min-height: 70px; }
+        .readonly-field {
+            background: #1e314a;
+            border: 1px solid #5773a6;
+            color: #ccdeff;
+            font-weight: 600;
+        }
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-primary {
+            background: #3f5e9c;
+            color: white;
+        }
+        .btn-secondary {
+            background: #2a3855;
+            color: #b8d0ff;
+            border: 1px solid #506a9a;
+        }
+        .power-group {
+            background: #101c30;
+            border-radius: 20px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .power-group h4 {
+            color: #b4ccff;
+            margin-bottom: 10px;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>👓 LensAI Frame Fit</h1>
-        <div class="subhead">Position your face → Lock your size</div>
+<div class="container">
+    <h1>⍟ LensAI · precision fit</h1>
+    <div class="subhead">CNN analysis • mm‑accurate frame size • customer intake</div>
 
-        <!-- Camera + Overlay -->
-        <div class="camera-box">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlay"></canvas>
-        </div>
-
-        <!-- Status & Frame Size -->
-        <div class="status-panel">
-            <div class="badge" id="statusBadge">📷 Initializing camera...</div>
-            <div class="frame-size" id="frameSizeDisplay">--</div>
-            <div class="detail">
-                <span>Face distance</span>
-                <span id="distanceLabel">--</span>
-            </div>
-            <div class="detail">
-                <span>Pupillary distance (PD)</span>
-                <span id="pdDisplay">--</span>
-            </div>
-            <div class="note" id="instruction">
-                ⚡ Make sure your face is well lit and centered
-            </div>
-        </div>
-
-        <!-- Lock / Unlock Button -->
-        <button class="btn-lock" id="lockBtn">
-            <span>🔒</span> Lock Frame Size
-        </button>
-
-        <!-- Loading indicator -->
-        <div id="loader" class="loading">
-            <div class="spinner"></div>
-            <span>Loading AI models...</span>
-        </div>
+    <!-- camera + overlay -->
+    <div class="camera-box">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="overlay"></canvas>
     </div>
 
-    <script>
-        (async function() {
-            "use strict";
+    <!-- live status panel -->
+    <div class="status-panel">
+        <span class="badge" id="statusBadge">📡 initializing camera...</span>
+        <div class="frame-size" id="frameSizeDisplay">--</div>
+        <div class="detail-row"><span>📏 face distance</span> <span id="distanceLabel">--</span></div>
+        <div class="detail-row"><span>👁️ pupillary distance (PD)</span> <span id="pdDisplay">-- mm</span></div>
+        <div class="detail-row"><span>🧏 face shape (CNN)</span> <span id="shapeDisplay">detecting...</span></div>
+    </div>
 
-            // ----- DOM elements -----
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('overlay');
-            const ctx = canvas.getContext('2d');
-            const statusBadge = document.getElementById('statusBadge');
-            const frameSizeDisplay = document.getElementById('frameSizeDisplay');
-            const distanceLabel = document.getElementById('distanceLabel');
-            const pdDisplay = document.getElementById('pdDisplay');
-            const loader = document.getElementById('loader');
-            const instruction = document.getElementById('instruction');
-            const lockBtn = document.getElementById('lockBtn');
+    <!-- capture button (enabled only when optimal) -->
+    <button class="capture-btn" id="captureBtn" disabled>
+        <span>📸</span> CAPTURE & ENTER DETAILS
+    </button>
 
-            // ----- State -----
-            let modelsReady = false;
-            let cameraActive = false;
-            let detectionInterval = null;
-            let currentStream = null;
-            let isLocked = false;          // 🔒 lock state
-            let lockedFrameSize = '--';
-            let lockedDistance = '--';
-            let lockedPd = '--';
+    <!-- gallery of previous captures -->
+    <div class="gallery">
+        <h3>🕶️ past entries
+            <button class="clear-btn" id="clearGalleryBtn">clear all</button>
+        </h3>
+        <div id="galleryContainer" class="capture-grid">
+            <!-- cards will appear here -->
+        </div>
+        <div class="note">✨ all data saved on this device</div>
+    </div>
 
-            // ----- Model CDNs (fallback) -----
-            const MODEL_CDNS = [
-                "https://justadudewhohacks.github.io/face-api.js/models/",
-                "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/",
-                "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/"
-            ];
+    <!-- loader (hidden after models) -->
+    <div id="loader" class="loading"><div class="spinner"></div><span>loading CNN models (face-api)</span></div>
+</div>
 
-            // ----- Load face-api models -----
-            async function loadModels() {
-                statusBadge.textContent = '⏳ Loading AI models...';
-                for (const url of MODEL_CDNS) {
-                    try {
-                        await faceapi.nets.tinyFaceDetector.loadFromUri(url);
-                        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(url);
-                        // ageGenderNet not needed – removed for speed
-                        console.log(`✅ Models loaded from ${url}`);
-                        modelsReady = true;
-                        statusBadge.textContent = '✅ Ready – show your face';
-                        loader.classList.add('hidden');
-                        return;
-                    } catch (e) {
-                        console.warn(`Failed from ${url}:`, e);
-                    }
-                }
-                // If all fail – run in "offline" mode with basic capture
-                statusBadge.textContent = '⚠️ Offline mode – basic estimation';
-                modelsReady = false;
+<!-- Modal: Customer details form -->
+<div class="modal" id="customerFormModal">
+    <div class="modal-content">
+        <h2>👤 Customer details & prescription</h2>
+        <form id="detailsForm">
+            <div class="form-grid">
+                <!-- Basic info -->
+                <div class="full-width"><label>Full name *</label><input type="text" id="fullName" required></div>
+                <div><label>Age *</label><input type="number" id="age" required min="1" max="120"></div>
+                <div><label>Date of birth</label><input type="date" id="dob"></div>
+                <div><label>Gender</label><select id="genderSelect"><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
+                <div class="full-width"><label>Address</label><textarea id="address" rows="2"></textarea></div>
+                <div><label>Ward no.</label><input type="text" id="ward"></div>
+                <div><label>Booth no. / PS no.</label><input type="text" id="booth"></div>
+                <div class="full-width"><label>Mobile / WhatsApp *</label><input type="tel" id="mobile" required placeholder="e.g. 9876543210"></div>
+            </div>
+
+            <!-- Auto-detected fields (readonly) -->
+            <div style="margin: 18px 0 10px; background:#1b2845; border-radius: 24px; padding: 14px;">
+                <div class="detail-row"><span>📐 Detected frame size</span> <span id="detectedFrameSize" class="readonly-field" style="padding:4px 12px;">--</span></div>
+                <div class="detail-row"><span>🕶️ Suggested frame type</span> <span id="detectedFrameType" class="readonly-field" style="padding:4px 12px;">--</span></div>
+            </div>
+
+            <!-- Power parameters (OD / OS) -->
+            <div style="margin-top: 15px;">
+                <h3 style="color:#b4ccff; font-size:18px; margin-bottom:8px;">🔎 Power details</h3>
+                <div class="power-group">
+                    <h4>Right eye (O.D.)</h4>
+                    <div class="form-grid">
+                        <div><label>Spherical</label><input type="text" id="odSph" placeholder="e.g. -2.00"></div>
+                        <div><label>Cylindrical</label><input type="text" id="odCyl" placeholder="e.g. -0.50"></div>
+                        <div><label>Axis</label><input type="text" id="odAxis" placeholder="e.g. 180"></div>
+                        <div><label>Prism</label><input type="text" id="odPrism"></div>
+                        <div><label>Base</label><input type="text" id="odBase"></div>
+                    </div>
+                </div>
+                <div class="power-group">
+                    <h4>Left eye (O.S.)</h4>
+                    <div class="form-grid">
+                        <div><label>Spherical</label><input type="text" id="osSph"></div>
+                        <div><label>Cylindrical</label><input type="text" id="osCyl"></div>
+                        <div><label>Axis</label><input type="text" id="osAxis"></div>
+                        <div><label>Prism</label><input type="text" id="osPrism"></div>
+                        <div><label>Base</label><input type="text" id="osBase"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelFormBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary">💾 Save entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ----- DOM elements -----
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('overlay');
+    const ctx = canvas.getContext('2d');
+    const statusBadge = document.getElementById('statusBadge');
+    const frameSizeDisplay = document.getElementById('frameSizeDisplay');
+    const distanceLabel = document.getElementById('distanceLabel');
+    const pdDisplay = document.getElementById('pdDisplay');
+    const shapeDisplay = document.getElementById('shapeDisplay');
+    const captureBtn = document.getElementById('captureBtn');
+    const galleryDiv = document.getElementById('galleryContainer');
+    const clearBtn = document.getElementById('clearGalleryBtn');
+    const loader = document.getElementById('loader');
+    const modal = document.getElementById('customerFormModal');
+    const cancelFormBtn = document.getElementById('cancelFormBtn');
+    const detailsForm = document.getElementById('detailsForm');
+
+    // fields inside modal (auto‑filled)
+    const detectedFrameSpan = document.getElementById('detectedFrameSize');
+    const detectedTypeSpan = document.getElementById('detectedFrameType');
+
+    // ----- state -----
+    let modelsReady = false;
+    let cameraActive = false;
+    let currentStream = null;
+    let detectionInterval = null;
+    let lastDetection = null;                // latest detection result
+    let lastFrameSizeMm = 0;                 // calculated frame width in mm
+    let lastFrameType = '';                  // recommendation string
+    let lastPdMm = 0;
+    let lastShape = '';
+
+    // collection of saved entries (max 15)
+    let entries = [];
+
+    // constants
+    const AVERAGE_PD_MM = 63;                // reference adult PD
+
+    // ----- load stored entries from localStorage -----
+    function loadEntries() {
+        try {
+            const stored = localStorage.getItem('lensai_entries');
+            if (stored) {
+                entries = JSON.parse(stored);
+                if (entries.length > 15) entries = entries.slice(-15);
+            }
+        } catch (e) { console.warn('failed to load entries', e); }
+        renderGallery();
+    }
+    function saveEntries() {
+        try {
+            localStorage.setItem('lensai_entries', JSON.stringify(entries));
+        } catch (e) { console.warn('storage failed', e); }
+        renderGallery();
+    }
+
+    // ----- render gallery cards -----
+    function renderGallery() {
+        if (!galleryDiv) return;
+        if (entries.length === 0) {
+            galleryDiv.innerHTML = '<div style="color:#6a7faa; padding:10px; text-align:center; width:100%;">no entries yet — capture a face</div>';
+            return;
+        }
+        let html = '';
+        entries.slice().reverse().forEach(entry => {
+            html += `<div class="capture-card">
+                <img src="${entry.thumbnail}" class="thumb" alt="face" />
+                <div class="rec-tag">${entry.name ? entry.name.slice(0,10) : '—'}</div>
+                <div class="meta-small">${entry.frameSize} · ${entry.shape}</div>
+                <div class="meta-small">📞 ${entry.mobile || ''}</div>
+            </div>`;
+        });
+        galleryDiv.innerHTML = html;
+    }
+
+    // ----- clear gallery -----
+    clearBtn.addEventListener('click', () => {
+        entries = [];
+        saveEntries();
+    });
+
+    // ----- load face-api models with fallback -----
+    async function loadModels() {
+        statusBadge.textContent = '⏳ loading AI models...';
+        for (const url of [
+            "https://justadudewhohacks.github.io/face-api.js/models/",
+            "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/",
+            "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/"
+        ]) {
+            try {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(url);
+                await faceapi.nets.faceLandmark68TinyNet.loadFromUri(url);
+                await faceapi.nets.ageGenderNet.loadFromUri(url);
+                console.log(`✅ models loaded from ${url}`);
+                modelsReady = true;
+                statusBadge.textContent = '✅ ready – show your face';
                 loader.classList.add('hidden');
-            }
+                return;
+            } catch (e) { console.warn('load fail', e); }
+        }
+        modelsReady = false;
+        statusBadge.textContent = '⚠️ offline mode – limited';
+        loader.classList.add('hidden');
+    }
 
-            // ----- Start camera -----
-            async function startCamera() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-                        audio: false
-                    });
-                    video.srcObject = stream;
-                    currentStream = stream;
-                    await new Promise((resolve) => { video.onloadedmetadata = resolve; });
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    await video.play();
-                    cameraActive = true;
-                    statusBadge.textContent = modelsReady ? '✅ Ready – show your face' : '⚠️ Offline – basic capture';
-                    startDetection();
-                } catch (err) {
-                    console.error('Camera error:', err);
-                    statusBadge.textContent = '❌ Camera access denied';
-                    instruction.textContent = 'Please allow camera access and refresh.';
-                }
-            }
-
-            // ----- Detection loop (only runs if NOT locked) -----
-            function startDetection() {
-                if (detectionInterval) clearInterval(detectionInterval);
-                if (isLocked) return; // don't start if already locked
-                detectionInterval = setInterval(async () => {
-                    if (!cameraActive || !video.videoWidth || isLocked) return;
-                    if (modelsReady) {
-                        await detectFace();
-                    } else {
-                        drawOfflineOverlay();
-                    }
-                }, 200);
-            }
-
-            // ----- Stop detection (when locked) -----
-            function stopDetection() {
-                if (detectionInterval) {
-                    clearInterval(detectionInterval);
-                    detectionInterval = null;
-                }
-            }
-
-            // ----- Face detection & analysis -----
-            async function detectFace() {
-                const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
-                    inputSize: 416,
-                    scoreThreshold: 0.5
-                })).withFaceLandmarks(true); // removed age/gender for speed
-                drawOverlay(det);
-            }
-
-            // ----- Draw overlay and update frame size -----
-            function drawOverlay(det) {
-                // If locked, do not update any values, but we still need to draw the overlay (maybe with locked ring)
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                if (!det) {
-                    if (!isLocked) {
-                        ctx.font = '16px Inter';
-                        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                        ctx.shadowColor = 'black';
-                        ctx.shadowBlur = 6;
-                        ctx.fillText('👤 No face', 20, 40);
-                        ctx.shadowBlur = 0;
-                        frameSizeDisplay.textContent = '--';
-                        distanceLabel.textContent = '--';
-                        pdDisplay.textContent = '--';
-                        statusBadge.innerHTML = '👤 No face detected';
-                    }
-                    return;
-                }
-
-                // Mirror context
-                ctx.save();
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-
-                const box = det.detection.box;
-                const cx = box.x + box.width / 2;
-                const cy = box.y + box.height / 2;
-                const radius = Math.max(box.width, box.height) * 0.58;
-                const ratio = box.width / canvas.width;
-
-                // Determine distance and frame size
-                let distanceStatus, ringColor, frameSize;
-                if (ratio < 0.22) {
-                    distanceStatus = 'too far';
-                    ringColor = '#f59e0b';
-                    frameSize = 'Too far – move closer';
-                } else if (ratio > 0.50) {
-                    distanceStatus = 'too close';
-                    ringColor = '#ef4444';
-                    frameSize = 'Too close – step back';
-                } else {
-                    distanceStatus = 'optimal';
-                    ringColor = '#10b981';
-                    if (ratio < 0.28) frameSize = 'Slim (132 mm)';
-                    else if (ratio > 0.47) frameSize = 'Wide (150 mm)';
-                    else frameSize = 'Classic (142 mm)';
-                }
-
-                // If locked, override ring color to blue and use locked values
-                if (isLocked) {
-                    ringColor = '#3b82f6'; // blue
-                    // Do NOT update UI values – keep locked ones
-                }
-
-                // ----- Draw guidance ring -----
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius + 6, 0, 2 * Math.PI);
-                ctx.strokeStyle = ringColor + '80';
-                ctx.lineWidth = 12;
-                ctx.shadowBlur = 30;
-                ctx.shadowColor = ringColor;
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
-                ctx.strokeStyle = ringColor;
-                ctx.lineWidth = 4;
-                ctx.shadowBlur = 24;
-                ctx.stroke();
-
-                // Dashed inner ring (only if not locked to save CPU)
-                if (!isLocked) {
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, radius - 12, 0, 2 * Math.PI);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-                    ctx.lineWidth = 2;
-                    ctx.shadowBlur = 0;
-                    ctx.setLineDash([8, 12]);
-                    ctx.lineDashOffset = -((Date.now() * 0.02) % 20);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                }
-
-                // ----- Draw landmarks (small dots) -----
-                if (det.landmarks && !isLocked) {
-                    const pts = det.landmarks.positions;
-                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                    ctx.shadowBlur = 8;
-                    ctx.shadowColor = '#3888ff';
-                    pts.forEach(p => {
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, 1.8, 0, 2 * Math.PI);
-                        ctx.fill();
-                    });
-                }
-
-                ctx.restore();
-
-                // ----- Update UI with frame size and metrics (only if NOT locked) -----
-                if (!isLocked) {
-                    frameSizeDisplay.textContent = frameSize;
-                    distanceLabel.textContent = distanceStatus;
-
-                    // Estimate PD if landmarks exist
-                    if (det.landmarks) {
-                        const lm = det.landmarks;
-                        const leftEye = lm.getLeftEye();
-                        const rightEye = lm.getRightEye();
-                        const lPupil = leftEye[Math.floor(leftEye.length / 2)];
-                        const rPupil = rightEye[Math.floor(rightEye.length / 2)];
-                        const pdPx = Math.abs(rPupil.x - lPupil.x);
-                        const estimatedPdMm = Math.round((pdPx / canvas.width) * 140);
-                        pdDisplay.textContent = estimatedPdMm + ' mm';
-                    } else {
-                        pdDisplay.textContent = '--';
-                    }
-
-                    // Update badge
-                    if (distanceStatus === 'optimal') {
-                        statusBadge.innerHTML = '✅ Face locked · ' + frameSize;
-                        statusBadge.style.background = 'rgba(16,185,129,0.2)';
-                        statusBadge.style.borderColor = '#10b981';
-                    } else if (distanceStatus === 'too far') {
-                        statusBadge.innerHTML = '⬅️ Move closer';
-                        statusBadge.style.background = 'rgba(245,158,11,0.2)';
-                        statusBadge.style.borderColor = '#f59e0b';
-                    } else if (distanceStatus === 'too close') {
-                        statusBadge.innerHTML = '➡️ Step back';
-                        statusBadge.style.background = 'rgba(239,68,68,0.2)';
-                        statusBadge.style.borderColor = '#ef4444';
-                    }
-                }
-            }
-
-            // ----- Fallback when no models -----
-            function drawOfflineOverlay() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.font = '16px Inter';
-                ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                ctx.shadowBlur = 6;
-                ctx.shadowColor = 'black';
-                ctx.fillText('⚠️ Offline mode', 20, 40);
-                ctx.shadowBlur = 0;
-                if (!isLocked) {
-                    frameSizeDisplay.textContent = '-- (offline)';
-                    distanceLabel.textContent = '--';
-                    pdDisplay.textContent = '--';
-                }
-            }
-
-            // ----- Lock / Unlock handler -----
-            function toggleLock() {
-                if (!isLocked) {
-                    // Lock: store current values, stop detection, change UI
-                    if (frameSizeDisplay.textContent && frameSizeDisplay.textContent !== '--') {
-                        lockedFrameSize = frameSizeDisplay.textContent;
-                        lockedDistance = distanceLabel.textContent;
-                        lockedPd = pdDisplay.textContent;
-                    } else {
-                        // No valid frame yet – cannot lock
-                        alert('Position your face first to get a frame size.');
-                        return;
-                    }
-                    isLocked = true;
-                    stopDetection();
-                    
-                    // Update UI to locked state
-                    frameSizeDisplay.classList.add('locked');
-                    statusBadge.classList.add('locked');
-                    lockBtn.classList.add('locked');
-                    lockBtn.innerHTML = '<span>🔓</span> Unlock Frame Size';
-                    statusBadge.innerHTML = '🔒 Locked · ' + lockedFrameSize;
-                    statusBadge.style.background = 'rgba(59,130,246,0.3)';
-                    statusBadge.style.borderColor = '#3b82f6';
-                    instruction.textContent = '✅ Frame size locked – you can now fill your order.';
-                } else {
-                    // Unlock: resume detection, revert UI
-                    isLocked = false;
-                    frameSizeDisplay.classList.remove('locked');
-                    statusBadge.classList.remove('locked');
-                    lockBtn.classList.remove('locked');
-                    lockBtn.innerHTML = '<span>🔒</span> Lock Frame Size';
-                    statusBadge.innerHTML = '✅ Ready – show your face';
-                    statusBadge.style.background = 'rgba(56,136,255,0.2)';
-                    statusBadge.style.borderColor = '#3888ff';
-                    instruction.textContent = '⚡ Make sure your face is well lit and centered';
-                    startDetection();
-                }
-            }
-
-            // ----- Cleanup -----
-            window.addEventListener('beforeunload', () => {
-                if (currentStream) {
-                    currentStream.getTracks().forEach(t => t.stop());
-                }
-                if (detectionInterval) clearInterval(detectionInterval);
+    // ----- start camera -----
+    async function startCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: false
             });
+            video.srcObject = stream;
+            currentStream = stream;
+            await new Promise(r => { video.onloadedmetadata = r; });
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            await video.play();
+            cameraActive = true;
+            statusBadge.textContent = modelsReady ? '✅ show your face' : '⚠️ offline';
+            startDetectionLoop();
+        } catch (err) {
+            statusBadge.textContent = '❌ camera access denied';
+        }
+    }
 
-            // ----- Event listeners -----
-            lockBtn.addEventListener('click', toggleLock);
+    // ----- periodic detection -----
+    function startDetectionLoop() {
+        if (detectionInterval) clearInterval(detectionInterval);
+        detectionInterval = setInterval(async () => {
+            if (!cameraActive || !video.videoWidth) return;
+            if (modelsReady) {
+                await detectFaceAndDraw();
+            } else {
+                drawOfflineOverlay();
+            }
+        }, 200);
+    }
 
-            // ----- Start everything -----
-            await loadModels();
-            await startCamera();
-        })();
-    </script>
+    // ----- detection + overlay + metrics update -----
+    async function detectFaceAndDraw() {
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
+            inputSize: 416,
+            scoreThreshold: 0.5
+        })).withFaceLandmarks(true).withAgeAndGender();
+
+        lastDetection = detection;
+        drawOverlay(detection);
+        updateMetrics(detection);
+    }
+
+    // ----- draw overlay (mirrored) -----
+    function drawOverlay(det) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!det) {
+            ctx.font = 'bold 16px Inter';
+            ctx.fillStyle = '#ffffffcc';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 8;
+            ctx.fillText('👤 no face', 24, 50);
+            ctx.shadowBlur = 0;
+            return;
+        }
+
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+
+        const box = det.detection.box;
+        const cx = box.x + box.width/2;
+        const cy = box.y + box.height/2;
+        const radius = Math.max(box.width, box.height) * 0.58;
+        const faceRatio = box.width / canvas.width;
+
+        let ringColor = '#fbbf24';
+        if (faceRatio < 0.22) ringColor = '#f59e0b';
+        else if (faceRatio > 0.5) ringColor = '#ef4444';
+        else ringColor = '#10b981';
+
+        // outer glow
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius+6, 0, 2*Math.PI);
+        ctx.strokeStyle = ringColor + '80';
+        ctx.lineWidth = 12;
+        ctx.shadowBlur = 28;
+        ctx.shadowColor = ringColor;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+        ctx.strokeStyle = ringColor;
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 20;
+        ctx.stroke();
+
+        // dashed inner ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius-12, 0, 2*Math.PI);
+        ctx.strokeStyle = '#ffffff80';
+        ctx.lineWidth = 2.5;
+        ctx.shadowBlur = 0;
+        ctx.setLineDash([8, 14]);
+        ctx.lineDashOffset = (Date.now() * 0.02) % 20;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // landmarks
+        if (det.landmarks) {
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#3888ff';
+            det.landmarks.positions.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2, 0, 2*Math.PI);
+                ctx.fill();
+            });
+        }
+        ctx.restore();
+    }
+
+    // ----- update text fields, calculate frame mm, frame type -----
+    function updateMetrics(det) {
+        if (!det) {
+            frameSizeDisplay.textContent = '--';
+            distanceLabel.textContent = '--';
+            pdDisplay.textContent = '--';
+            shapeDisplay.textContent = '--';
+            captureBtn.disabled = true;
+            statusBadge.innerHTML = '👤 no face';
+            return;
+        }
+
+        const box = det.detection.box;
+        const faceRatio = box.width / canvas.width;
+        let distanceStatus;
+        if (faceRatio < 0.22) distanceStatus = 'too far';
+        else if (faceRatio > 0.5) distanceStatus = 'too close';
+        else distanceStatus = 'optimal';
+
+        // ----- compute PD in mm -----
+        let pdValue = '--';
+        let pdPx = null;
+        if (det.landmarks) {
+            const leftEye = det.landmarks.getLeftEye();
+            const rightEye = det.landmarks.getRightEye();
+            const l = leftEye[Math.floor(leftEye.length/2)];
+            const r = rightEye[Math.floor(rightEye.length/2)];
+            pdPx = Math.abs(r.x - l.x);
+            if (pdPx > 0) {
+                const pdMmEst = Math.round((pdPx / canvas.width) * 140); // fallback but we refine below
+                pdValue = pdMmEst + '';
+            }
+        }
+
+        // ----- face width in mm using PD reference -----
+        let faceWidthMm = 0;
+        if (pdPx && det.landmarks) {
+            // use actual PD pixels to scale: 1px = AVERAGE_PD_MM / pdPx mm
+            const mmPerPx = AVERAGE_PD_MM / pdPx;
+            faceWidthMm = Math.round(box.width * mmPerPx);
+        } else {
+            // fallback using average face width ~145mm and ratio
+            faceWidthMm = Math.round(145 * (box.width / canvas.width));
+        }
+        // frame size recommendation (frame should be slightly wider than face)
+        let frameSizeText = faceWidthMm + ' mm face width';
+        if (faceWidthMm < 130) frameSizeText = 'Slim (≤' + faceWidthMm + ' mm)';
+        else if (faceWidthMm > 155) frameSizeText = 'Wide (' + faceWidthMm + ' mm)';
+        else frameSizeText = 'Classic (' + faceWidthMm + ' mm)';
+
+        // ----- face shape -----
+        let shape = 'oval';
+        if (det.landmarks) {
+            const jaw = det.landmarks.getJawOutline();
+            const ratioWH = box.width / box.height;
+            if (ratioWH > 0.95 && ratioWH < 1.08) shape = 'round';
+            else if (ratioWH <= 0.9) shape = 'oval';
+            else if (ratioWH >= 1.1) shape = 'long';
+            else shape = 'square';
+        }
+
+        // ----- frame type suggestion based on shape, gender, age -----
+        let gender = det.gender || 'neutral';
+        let age = det.age ? Math.round(det.age) : 30;
+        let suggestion = '';
+        if (shape === 'round') suggestion = 'angular / square frames';
+        else if (shape === 'oval') suggestion = 'aviators, wayfarers';
+        else if (shape === 'square') suggestion = 'round / cat-eye';
+        else if (shape === 'heart') suggestion = 'bottom-heavy';
+        else if (shape === 'long') suggestion = 'oversized / bold temples';
+        else suggestion = 'classic rectangle';
+        if (gender === 'female' && age < 35) suggestion += ' · trendy';
+        else if (gender === 'male' && age > 45) suggestion += ' · conservative';
+
+        // store globally for later use
+        lastFrameSizeMm = faceWidthMm;
+        lastFrameType = suggestion;
+        lastPdMm = pdPx ? Math.round(AVERAGE_PD_MM) : 0; // we already used PD for scaling
+        lastShape = shape;
+
+        // update DOM
+        frameSizeDisplay.textContent = frameSizeText;
+        distanceLabel.textContent = distanceStatus;
+        pdDisplay.textContent = (pdPx ? Math.round((pdPx / canvas.width) * 140) : '--') + ' mm';
+        shapeDisplay.textContent = shape;
+
+        // enable/disable capture
+        captureBtn.disabled = (distanceStatus !== 'optimal');
+
+        statusBadge.innerHTML = distanceStatus === 'optimal' ? `✅ locked · ${shape}` : (distanceStatus === 'too far' ? '⬅️ move closer' : '➡️ step back');
+    }
+
+    function drawOfflineOverlay() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '16px Inter';
+        ctx.fillStyle = '#ffffffcc';
+        ctx.shadowBlur = 6;
+        ctx.fillText('📴 offline mode', 24, 50);
+        ctx.shadowBlur = 0;
+    }
+
+    // ----- show modal and prefill detected values -----
+    function openFormModal() {
+        if (!lastDetection) {
+            alert('No face data. Please capture again.');
+            return;
+        }
+        detectedFrameSpan.textContent = lastFrameSizeMm ? lastFrameSizeMm + ' mm' : '--';
+        detectedTypeSpan.textContent = lastFrameType || '--';
+        // Optionally prefill gender from detection
+        if (lastDetection.gender) {
+            document.getElementById('genderSelect').value = lastDetection.gender.toLowerCase();
+        }
+        if (lastDetection.age) {
+            document.getElementById('age').value = Math.round(lastDetection.age);
+        }
+        modal.classList.add('active');
+    }
+
+    cancelFormBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+
+    // ----- handle form submit: combine with captured data and save -----
+    detailsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        // generate thumbnail from video
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.width = 100;
+        thumbCanvas.height = 100;
+        const tCtx = thumbCanvas.getContext('2d');
+        tCtx.translate(100, 0);
+        tCtx.scale(-1, 1);
+        tCtx.drawImage(video, 0, 0, 100, 100);
+        const thumbData = thumbCanvas.toDataURL('image/jpeg', 0.7);
+
+        const name = document.getElementById('fullName').value.trim() || 'Unknown';
+        const age = document.getElementById('age').value;
+        const dob = document.getElementById('dob').value;
+        const gender = document.getElementById('genderSelect').value;
+        const address = document.getElementById('address').value;
+        const ward = document.getElementById('ward').value;
+        const booth = document.getElementById('booth').value;
+        const mobile = document.getElementById('mobile').value;
+        const odSph = document.getElementById('odSph').value;
+        const odCyl = document.getElementById('odCyl').value;
+        const odAxis = document.getElementById('odAxis').value;
+        const odPrism = document.getElementById('odPrism').value;
+        const odBase = document.getElementById('odBase').value;
+        const osSph = document.getElementById('osSph').value;
+        const osCyl = document.getElementById('osCyl').value;
+        const osAxis = document.getElementById('osAxis').value;
+        const osPrism = document.getElementById('osPrism').value;
+        const osBase = document.getElementById('osBase').value;
+
+        const entry = {
+            thumbnail: thumbData,
+            name: name,
+            age: age,
+            dob: dob,
+            gender: gender,
+            address: address,
+            ward: ward,
+            booth: booth,
+            mobile: mobile,
+            frameSize: lastFrameSizeMm + ' mm',
+            shape: lastShape,
+            frameType: lastFrameType,
+            pd: lastPdMm,
+            power: { od: { sph: odSph, cyl: odCyl, axis: odAxis, prism: odPrism, base: odBase },
+                     os: { sph: osSph, cyl: osCyl, axis: osAxis, prism: osPrism, base: osBase } },
+            timestamp: Date.now()
+        };
+
+        entries.push(entry);
+        if (entries.length > 15) entries.shift();
+        saveEntries();
+
+        modal.classList.remove('active');
+        detailsForm.reset(); // optional, but keep detected values for next?
+        // re-show detected frame fields as they were before reset
+        detectedFrameSpan.textContent = lastFrameSizeMm + ' mm';
+        detectedTypeSpan.textContent = lastFrameType;
+    });
+
+    // ----- capture button click -> open modal -----
+    captureBtn.addEventListener('click', openFormModal);
+
+    // ----- cleanup -----
+    window.addEventListener('beforeunload', () => {
+        if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+        if (detectionInterval) clearInterval(detectionInterval);
+    });
+
+    // ----- bootstrap -----
+    loadEntries();
+    loadModels().then(() => startCamera());
+})();
+</script>
 </body>
 </html>
